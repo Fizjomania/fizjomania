@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Monitor HRV · Fizjomania</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#f8f7f4;--surface:#fff;--border:#e8e4de;
+  --text:#1a1a18;--muted:#9a9690;
+  --accent:#1a6b5a;--accent-l:#e8f5f2;
+  --green:#276749;--green-l:#c6f6d5;
+  --red:#9b2335;--red-l:#fed7d7;
+  --orange:#c47a15;--orange-l:#fef3cd;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{height:100%;height:-webkit-fill-available;}
+body{height:100%;min-height:100vh;background:var(--bg);
+  font-family:'DM Sans',sans-serif;color:var(--text);
+  overflow:hidden;-webkit-overflow-scrolling:touch;}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;
+  align-items:center;padding:20px 18px 70px;overflow-y:auto;gap:0;}
+.screen.on{display:flex;}
+.screen.centered{justify-content:center;}
+.tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:6px;}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,8vw,50px);font-weight:600;line-height:1.05;text-align:center;margin-bottom:10px;}
+h1 em{font-style:italic;color:var(--accent);}
+.subtitle{font-size:13px;color:var(--muted);text-align:center;line-height:1.7;max-width:380px;margin-bottom:16px;font-weight:300;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:13px 28px;border-radius:50px;border:none;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all .18s;-webkit-user-select:none;user-select:none;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(26,107,90,.22);}
+.btn-outline{background:transparent;color:var(--accent);border:1.5px solid var(--accent);}
+.btn-sm{padding:9px 20px;font-size:13px;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-gray{background:var(--border);color:var(--muted);}
+.btns-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;width:100%;max-width:440px;}
+.card-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+#nav{position:fixed;bottom:0;left:0;right:0;height:56px;
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-around;z-index:100;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:none;border:none;cursor:pointer;padding:6px 12px;
+  color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;
+  font-family:'DM Sans',sans-serif;transition:color .18s;}
+.nav-btn.active{color:var(--accent);}
+.nav-icon{font-size:18px;line-height:1;}
+.brand{position:fixed;bottom:68px;left:0;right:0;text-align:center;
+  font-size:10px;color:var(--border);pointer-events:none;z-index:50;}
+/* HOME */
+#s-home{justify-content:flex-start;padding-top:28px;}
+.home-session-card{background:var(--surface);border:1.5px solid var(--accent);
+  border-radius:var(--radius);padding:16px 18px;width:100%;max-width:440px;margin-bottom:10px;}
+.hsc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.hsc-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--accent);}
+.hsc-time{font-size:11px;color:var(--muted);}
+.hsc-measurements{display:flex;gap:8px;flex-wrap:wrap;}
+.hsc-meas{background:var(--accent-l);border-radius:8px;padding:8px 12px;text-align:center;min-width:60px;}
+.hsc-meas-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--accent);line-height:1;}
+.hsc-meas-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+/* NOWA SESJA */
+#s-new-session{justify-content:center;}
+.ns-input{width:100%;max-width:380px;padding:14px 16px;
+  border-radius:var(--radius);border:1.5px solid var(--border);
+  font-family:'DM Sans',sans-serif;font-size:16px;background:var(--bg);
+  color:var(--text);outline:none;transition:border .2s;margin-bottom:10px;}
+.ns-input:focus{border-color:var(--accent);}
+.ns-input::placeholder{color:var(--muted);}
+/* POMIAR */
+#s-measure{padding:0;justify-content:flex-start;}
+#meas-bar{width:100%;padding:12px 18px;display:flex;align-items:center;
+  justify-content:space-between;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+#meas-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+#meas-timer{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;}
+#meas-prog-wrap{width:100%;height:2px;background:var(--border);flex-shrink:0;}
+#meas-prog{height:100%;background:var(--accent);width:0%;transition:width .5s linear;}
+#meas-body{flex:1;width:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:14px;}
+#camera-wrap{position:relative;width:min(190px,52vw);height:min(190px,52vw);flex-shrink:0;}
+#camera-video{width:100%;height:100%;object-fit:cover;border-radius:50%;background:#000;display:block;}
+#signal-ring{position:absolute;inset:-5px;border-radius:50%;border:3px solid transparent;transition:border-color .3s;}
+#signal-ring.weak{border-color:rgba(200,100,10,.5);}
+#signal-ring.good{border-color:rgba(26,107,90,.6);}
+#finger-overlay{position:absolute;inset:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;pointer-events:none;}
+#live-bpm{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,12vw,68px);
+  font-weight:600;color:var(--accent);line-height:1;text-align:center;}
+#live-bpm-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+#ppg-wrap{width:min(300px,84vw);height:56px;background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+#ppg-cv{display:block;}
+#qual-wrap{width:min(190px,52vw);height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+#qual-bar{height:100%;background:var(--accent);width:0%;transition:width .3s;}
+#qual-lbl{font-size:11px;color:var(--muted);text-align:center;}
+#meas-hint{font-size:13px;color:var(--muted);text-align:center;max-width:290px;line-height:1.7;font-weight:300;}
+#meas-hint strong{color:var(--text);}
+/* WYNIKI */
+#s-results{padding-top:16px;}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;margin-bottom:10px;}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.mc-name{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.mc-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;line-height:1;}
+.mc-unit{font-size:11px;color:var(--muted);}
+.mc-badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;display:inline-block;margin-top:4px;}
+.mc-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-top:5px;font-weight:300;}
+.b-good{background:var(--green-l);color:var(--green);}
+.b-avg{background:var(--orange-l);color:var(--orange);}
+.b-low{background:var(--red-l);color:var(--red);}
+.interp-card{background:var(--accent);color:#fff;border-radius:var(--radius);
+  padding:16px 18px;width:100%;max-width:440px;margin-bottom:10px;}
+.ic-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;margin-bottom:6px;}
+.ic-body{font-size:13px;line-height:1.8;opacity:.88;font-weight:300;}
+/* SESJA AKTYWNA */
+#s-active-session{padding-top:16px;}
+.timeline{width:100%;max-width:440px;display:flex;flex-direction:column;gap:0;margin-bottom:12px;}
+.tl-item{display:flex;gap:12px;align-items:flex-start;}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:32px;flex-shrink:0;}
+.tl-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;}
+.tl-dot.first{background:var(--text);}
+.tl-line{width:2px;flex:1;background:var(--border);min-height:20px;margin-top:2px;}
+.tl-content{flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;}
+.tl-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.tl-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.tl-elapsed{font-size:11px;color:var(--accent);font-weight:500;}
+.tl-metrics{display:flex;gap:10px;flex-wrap:wrap;}
+.tl-metric{text-align:center;}
+.tl-val{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1;}
+.tl-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:1px;}
+.tl-deltas{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.delta-chip{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;}
+.dc-good{background:var(--green-l);color:var(--green);}
+.dc-bad{background:var(--red-l);color:var(--red);}
+.dc-same{background:var(--border);color:var(--muted);}
+/* HISTORIA */
+#s-history{padding-top:16px;}
+.hist-item{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 16px;width:100%;max-width:440px;
+  margin-bottom:8px;cursor:pointer;transition:border-color .2s;}
+.hist-item:hover{border-color:var(--accent);}
+.hi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.hi-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;}
+.hi-date{font-size:11px;color:var(--muted);}
+.hi-bottom{display:flex;gap:10px;align-items:center;}
+.hi-count{font-size:12px;color:var(--accent);font-weight:500;}
+.hi-metrics{display:flex;gap:8px;}
+.hi-m{text-align:center;}
+.hi-mv{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;line-height:1;}
+.hi-ml{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.form-wrap{display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;}
+.form-wrap input{padding:11px 14px;border-radius:8px;border:1.5px solid var(--border);
+  font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);
+  outline:none;transition:border .2s;}
+.form-wrap input:focus{border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen on" id="s-home">
+  <div class="tag">Fizjomania · Monitor HRV</div>
+  <h1 style="margin-bottom:6px;">Monitor<br><em>HRV</em></h1>
+  <p class="subtitle">Utwórz sesję dla siebie lub pacjenta.<br>Mierz wielokrotnie – obserwuj regenerację układu nerwowego.</p>
+  <div id="active-session-wrap" style="width:100%;max-width:440px;display:none;margin-bottom:12px;"></div>
+  <div class="btns-row" style="margin-bottom:14px;">
+    <button class="btn btn-primary" onclick="showScreen('s-new-session')">➕ Nowa sesja</button>
+    <button class="btn btn-outline" onclick="showScreen('s-history')">📋 Historia</button>
+  </div>
+  <div id="recent-sessions" style="width:100%;max-width:440px;"></div>
+</div>
+
+<!-- NOWA SESJA -->
+<div class="screen centered" id="s-new-session">
+  <div class="tag">Nowa sesja</div>
+  <h1 style="font-size:clamp(26px,7vw,42px);margin-bottom:8px;">Kto<br><em>jest mierzony?</em></h1>
+  <p class="subtitle">Wpisz imię lub opis – np. "Anna rano" lub "Pacjent Jan"</p>
+  <input class="ns-input" id="session-name-input" type="text"
+    placeholder="Imię lub opis sesji…" maxlength="40" oninput="checkSessionName()">
+  <div class="btns-row" style="margin-top:4px;">
+    <button class="btn btn-primary" id="start-session-btn" onclick="createSession()" disabled>Utwórz sesję →</button>
+    <button class="btn btn-gray btn-sm" onclick="showScreen('s-home')">Anuluj</button>
+  </div>
+</div>
+
+<!-- SESJA AKTYWNA -->
+<div class="screen" id="s-active-session">
+  <div style="width:100%;max-width:440px;display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-shrink:0;padding-top:8px;">
+    <div>
+      <div class="tag" style="text-align:left;margin-bottom:2px;">AKTYWNA SESJA</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(20px,5vw,28px);font-weight:600;color:var(--accent);" id="as-name"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="showScreen('s-home')">← Start</button>
+  </div>
+  <div class="timeline" id="as-timeline"></div>
+  <div style="width:100%;max-width:440px;background:var(--accent-l);border:1.5px solid var(--accent);
+    border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;">
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;" id="as-next-label">POMIAR 1 – BAZOWY</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:12px;font-weight:300;" id="as-next-hint">Wykonaj pomiar bazowy przed ćwiczeniem.</p>
+    <div class="btns-row">
+      <button class="btn btn-primary" onclick="startMeasureInSession()">📍 Wykonaj pomiar</button>
+      <button class="btn btn-outline btn-sm" onclick="finishSession()">✓ Zakończ sesję</button>
+    </div>
+  </div>
+  <div id="as-chart-wrap" style="display:none;width:100%;max-width:440px;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">SDNN – przebieg sesji</div>
+    <canvas id="as-chart" height="110"></canvas>
+  </div>
+  <div class="btns-row" style="margin-bottom:10px;">
+    <button class="btn btn-sm" style="background:var(--red-l);color:var(--red);" onclick="deleteActiveSession()">🗑 Usuń sesję</button>
+  </div>
+</div>
+
+<!-- POMIAR -->
+<div class="screen" id="s-measure">
+  <div id="meas-bar">
+    <div id="meas-label">POMIAR HRV</div>
+    <div id="meas-timer">60</div>
+  </div>
+  <div id="meas-prog-wrap"><div id="meas-prog"></div></div>
+  <div id="meas-body">
+    <div id="meas-hint"><strong>Przyłóż opuszkę palca wskazującego</strong><br>do tylnej kamery – przykryj cały obiektyw.<br>Trzymaj nieruchomo. Lekki dotyk.</div>
+    <div id="camera-wrap">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <div id="signal-ring"></div>
+      <div id="finger-overlay">
+        <span style="font-size:26px;">☝️</span>
+        <span style="font-size:10px;color:var(--muted);letter-spacing:1px;">PRZYŁÓŻ PALEC</span>
+      </div>
+    </div>
+    <div><div id="live-bpm">–</div><div id="live-bpm-lbl">uderzeń / min</div></div>
+    <div id="ppg-wrap"><canvas id="ppg-cv" height="56"></canvas></div>
+    <div id="qual-wrap"><div id="qual-bar"></div></div>
+    <div id="qual-lbl">Czekam na sygnał…</div>
+  </div>
+</div>
+
+<!-- WYNIKI -->
+<div class="screen" id="s-results">
+  <div style="width:100%;max-width:440px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding-top:8px;">
+    <div>
+      <div class="tag" style="text-align:left;" id="res-tag">WYNIKI</div>
+      <div style="font-size:12px;color:var(--muted);" id="res-date"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="backFromResults()">← Wróć</button>
+  </div>
+  <div class="metric-grid" id="res-metric-grid"></div>
+  <div class="interp-card">
+    <div class="ic-title" id="res-interp-title"></div>
+    <div class="ic-body"  id="res-interp-body"></div>
+  </div>
+  <div id="res-compare-wrap" style="display:none;width:100%;max-width:440px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:10px;margin-top:10px;">
+    <div class="card-title">Zmiana vs pomiar bazowy</div>
+    <div id="res-compare-content"></div>
+  </div>
+  <div class="card" style="margin-bottom:10px;margin-top:10px;">
+    <div class="card-title">Wyślij wyniki</div>
+    <form action="https://formspree.io/f/maqdkyrj" method="POST" target="_blank" onsubmit="fillSendForm()" class="form-wrap">
+      <input type="text"  name="name"  placeholder="Imię" required>
+      <input type="email" name="email" placeholder="E-mail" required>
+      <input type="hidden" name="sesja"  id="sf-sess">
+      <input type="hidden" name="pomiar" id="sf-num">
+      <input type="hidden" name="data"   id="sf-date">
+      <input type="hidden" name="HR"     id="sf-hr">
+      <input type="hidden" name="SDNN"   id="sf-sdnn">
+      <input type="hidden" name="RMSSD"  id="sf-rmssd">
+      <input type="hidden" name="pNN50"  id="sf-pnn50">
+      <input type="hidden" name="CV"     id="sf-cv">
+      <input type="hidden" name="MxDMn"  id="sf-mxdmn">
+      <input type="hidden" name="AMo50"  id="sf-amo50">
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Wyślij →</button>
+    </form>
+  </div>
+</div>
+
+<!-- HISTORIA -->
+<div class="screen" id="s-history">
+  <div class="tag" style="margin-top:8px;">Historia sesji</div>
+  <h1 style="font-size:clamp(24px,6vw,38px);margin-bottom:10px;">Wszystkie<br><em>sesje</em></h1>
+  <div id="history-list" style="width:100%;max-width:440px;"></div>
+  <div class="btns-row" style="margin-top:8px;">
+    <button class="btn btn-sm" style="background:var(--red-l);color:var(--red);" onclick="clearAllHistory()">🗑 Wyczyść historię</button>
+  </div>
+</div>
+
+<!-- SZCZEGÓŁY SESJI -->
+<div class="screen" id="s-session-detail">
+  <div style="width:100%;max-width:440px;display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;padding-top:8px;flex-shrink:0;">
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(22px,5vw,32px);font-weight:600;color:var(--accent);" id="sd-name"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="sd-date"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="showScreen('s-history')">← Wróć</button>
+  </div>
+  <div class="timeline" id="sd-timeline"></div>
+  <div id="sd-chart-wrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;width:100%;max-width:440px;margin-bottom:10px;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">SDNN – przebieg sesji</div>
+    <canvas id="sd-chart" height="110"></canvas>
+  </div>
+  <div class="card" style="margin-bottom:10px;">
+    <div class="card-title">Wyślij całą sesję</div>
+    <form action="https://formspree.io/f/maqdkyrj" method="POST" target="_blank" onsubmit="fillSessionForm()" class="form-wrap">
+      <input type="text"  name="name"  placeholder="Imię" required>
+      <input type="email" name="email" placeholder="E-mail" required>
+      <input type="hidden" name="sesja_pelna" id="ssf-data">
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Wyślij całą sesję →</button>
+    </form>
+  </div>
+</div>
+
+<nav id="nav">
+  <button class="nav-btn active" onclick="showScreen('s-home')"       id="nav-home"><span class="nav-icon">🏠</span><span>Start</span></button>
+  <button class="nav-btn"        onclick="goToActiveSession()"         id="nav-session"><span class="nav-icon">📍</span><span>Sesja</span></button>
+  <button class="nav-btn"        onclick="showScreen('s-history')"     id="nav-history"><span class="nav-icon">📋</span><span>Historia</span></button>
+</nav>
+<div class="brand">Fizjomania – Anna Pietruch · fizjomania-jaroslaw.pl</div>
+
+<script>
+const DB_KEY='fizjo_hrv_sessions_v3';
+const ACT_KEY='fizjo_hrv_active_v3';
+function getSessions(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'[]');}catch(e){return[];}}
+function saveSessions(a){localStorage.setItem(DB_KEY,JSON.stringify(a));}
+function getActive(){try{return JSON.parse(localStorage.getItem(ACT_KEY)||'null');}catch(e){return null;}}
+function saveActive(s){if(s)localStorage.setItem(ACT_KEY,JSON.stringify(s));else localStorage.removeItem(ACT_KEY);}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const map={'s-home':'nav-home','s-active-session':'nav-session','s-history':'nav-history','s-session-detail':'nav-history'};
+  if(map[id])document.getElementById(map[id]).classList.add('active');
+  if(id==='s-home')renderHome();
+  if(id==='s-history')renderHistory();
+  if(id==='s-active-session')renderActiveSession();
+}
+
+function goToActiveSession(){
+  if(getActive())showScreen('s-active-session');
+  else showScreen('s-new-session');
+}
+
+function checkSessionName(){
+  const v=document.getElementById('session-name-input').value.trim();
+  document.getElementById('start-session-btn').disabled=v.length<1;
+}
+
+function createSession(){
+  const name=document.getElementById('session-name-input').value.trim();
+  if(!name)return;
+  const session={id:Date.now(),name,created:new Date().toISOString(),measurements:[],finished:false};
+  saveActive(session);
+  document.getElementById('session-name-input').value='';
+  document.getElementById('start-session-btn').disabled=true;
+  showScreen('s-active-session');
+}
+
+function renderActiveSession(){
+  const s=getActive();if(!s){showScreen('s-home');return;}
+  document.getElementById('as-name').textContent=s.name;
+  renderTimeline(s,'as-timeline');
+  const n=s.measurements.length;
+  const labels=['POMIAR 1 – BAZOWY','POMIAR 2','POMIAR 3','POMIAR 4','POMIAR 5'];
+  const hints=[
+    'Wykonaj pomiar bazowy przed ćwiczeniem regulacyjnym.',
+    'Wykonaj ćwiczenie regulacyjne, następnie zmierz – sprawdź pierwszą reakcję.',
+    'Odczekaj kilkanaście minut i zmierz ponownie – obserwuj regenerację.',
+    'Kolejny pomiar – układ nerwowy powinien wracać do równowagi.',
+    'Możesz dodać kolejny pomiar lub zakończyć sesję.',
+  ];
+  document.getElementById('as-next-label').textContent=labels[Math.min(n,labels.length-1)];
+  document.getElementById('as-next-hint').textContent=hints[Math.min(n,hints.length-1)];
+  const cw=document.getElementById('as-chart-wrap');
+  if(n>=2){
+    cw.style.display='block';
+    const cv=document.getElementById('as-chart');
+    cv.width=cw.offsetWidth-28;
+    drawSessionChart(s,cv);
+  } else cw.style.display='none';
+}
+
+function renderTimeline(session,containerId){
+  const wrap=document.getElementById(containerId);wrap.innerHTML='';
+  const ms=session.measurements;
+  const startT=ms.length>0?new Date(ms[0].date).getTime():null;
+  if(ms.length===0){wrap.innerHTML='<p style="font-size:13px;color:var(--muted);padding:8px 0;">Brak pomiarów w tej sesji.</p>';return;}
+  ms.forEach((m,i)=>{
+    const elapsed=startT?Math.round((new Date(m.date).getTime()-startT)/60000):0;
+    const isLast=i===ms.length-1;
+    const item=document.createElement('div');item.className='tl-item';
+    item.innerHTML=`
+      <div class="tl-left">
+        <div class="tl-dot${i===0?' first':''}"></div>
+        ${!isLast?'<div class="tl-line"></div>':''}
+      </div>
+      <div class="tl-content" style="flex:1;">
+        <div class="tl-top">
+          <div class="tl-label">${i===0?'BAZOWY':'POMIAR '+(i+1)}</div>
+          <div class="tl-elapsed">${i===0?'start':'+'+elapsed+' min'}</div>
+        </div>
+        <div class="tl-metrics">
+          ${['sdnn','rmssd','hr'].map(k=>`<div class="tl-metric"><div class="tl-val">${m.metrics[k]}</div><div class="tl-lbl">${{sdnn:'SDNN',rmssd:'RMSSD',hr:'HR bpm'}[k]}</div></div>`).join('')}
+        </div>
+        ${i>0?renderDeltaChips(ms[0].metrics,m.metrics):''}
+      </div>`;
+    wrap.appendChild(item);
+  });
+}
+
+function renderDeltaChips(base,cur){
+  const items=[{k:'sdnn',l:'SDNN',inv:false},{k:'rmssd',l:'RMSSD',inv:false},{k:'hr',l:'HR',inv:true}];
+  const chips=items.map(({k,l,inv})=>{
+    const d=cur[k]-base[k];
+    const better=inv?d<0:d>0;
+    const same=Math.abs(d)<2;
+    const cls=same?'dc-same':better?'dc-good':'dc-bad';
+    return `<span class="delta-chip ${cls}">${l} ${d>0?'+':''}${d}</span>`;
+  }).join('');
+  return `<div class="tl-deltas">${chips}</div>`;
+}
+
+function startMeasureInSession(){currentMeasureContext='session';launchMeasure();}
+
+function finishSession(){
+  const s=getActive();if(!s)return;
+  if(s.measurements.length===0){
+    if(!confirm('Sesja nie ma żadnych pomiarów. Usunąć?'))return;
+    saveActive(null);showScreen('s-home');return;
+  }
+  s.finished=true;
+  const sessions=getSessions();sessions.unshift(s);saveSessions(sessions);
+  saveActive(null);showScreen('s-history');
+}
+
+function deleteActiveSession(){
+  if(confirm('Usunąć aktywną sesję?')){saveActive(null);showScreen('s-home');}
+}
+
+// PPG
+const MEAS_SEC=60;
+let videoStream=null,ppgInterval=null,measInterval=null;
+let sampCv=null,sampCtx=null;
+let ppgBuf=[],peakTimes=[],rrIntervals=[];
+let measElapsed=0,currentMeasureContext='session';
+const ppgDrawCv=document.getElementById('ppg-cv');
+const ppgDrawCtx=ppgDrawCv.getContext('2d');
+
+function resizePPG(){const w=document.getElementById('ppg-wrap').offsetWidth||300;ppgDrawCv.width=w;ppgDrawCv.height=56;}
+
+async function launchMeasure(){
+  measElapsed=0;ppgBuf=[];peakTimes=[];rrIntervals=[];
+  document.getElementById('live-bpm').textContent='–';
+  document.getElementById('meas-prog').style.width='0%';
+  document.getElementById('meas-timer').textContent=MEAS_SEC;
+  document.getElementById('finger-overlay').style.opacity='1';
+  document.getElementById('signal-ring').className='';
+  document.getElementById('qual-lbl').textContent='Czekam na sygnał…';
+  document.getElementById('qual-bar').style.width='0%';
+  resizePPG();showScreen('s-measure');
+  try{
+    let vs;
+    try{vs=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:320},height:{ideal:240},advanced:[{torch:true}]}});}
+    catch(e){vs=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});}
+    videoStream=vs;
+    const vid=document.getElementById('camera-video');vid.srcObject=vs;await vid.play();
+    setTimeout(()=>{document.getElementById('finger-overlay').style.opacity='0';},2000);
+    sampCv=document.createElement('canvas');sampCv.width=20;sampCv.height=20;
+    sampCtx=sampCv.getContext('2d');
+    ppgInterval=setInterval(samplePPG,1000/30);
+  }catch(err){
+    alert('Nie mogę uruchomić kamery.\n'+err.message+'\n\nUpewnij się że strona jest na https:// i masz nadane uprawnienia do kamery.');
+    backFromMeasure();return;
+  }
+  measInterval=setInterval(measTick,1000);
+}
+
+function samplePPG(){
+  const vid=document.getElementById('camera-video');
+  if(!vid||!sampCtx||vid.readyState<2)return;
+  sampCtx.drawImage(vid,0,0,20,20);
+  const d=sampCtx.getImageData(0,0,20,20).data;
+  let r=0;for(let i=0;i<d.length;i+=4)r+=d[i];
+  const avg=r/(d.length/4);
+  const t=Date.now();
+  ppgBuf.push({val:avg,t});
+  const cut=t-10000;while(ppgBuf.length>0&&ppgBuf[0].t<cut)ppgBuf.shift();
+  const q=Math.min(100,Math.max(0,(avg-50)/1.5));
+  document.getElementById('qual-bar').style.width=q+'%';
+  if(q>40){
+    document.getElementById('qual-lbl').textContent=q>70?'✓ Dobry sygnał':'Sygnał słaby – przyciśnij mocniej';
+    document.getElementById('signal-ring').className=q>70?'good':'weak';
+  }else{
+    document.getElementById('qual-lbl').textContent='Przyłóż palec do kamery';
+    document.getElementById('signal-ring').className='';
+  }
+  if(q>50&&ppgBuf.length>30){detectPeaks();updateLiveBPM();}
+  drawPPG();
+}
+
+function detectPeaks(){
+  const recent=ppgBuf.slice(-180);
+  const vals=recent.map(d=>d.val);
+  const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const sd=Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length);
+  let lastPeakIdx=-999;
+  for(let i=2;i<recent.length-2;i++){
+    const v=recent[i].val;
+    if(v>recent[i-1].val&&v>recent[i-2].val&&v>recent[i+1].val&&v>recent[i+2].val&&
+       v>mean+sd*0.2&&i-lastPeakIdx>15){
+      lastPeakIdx=i;
+      const pt=recent[i].t;
+      if(peakTimes.length===0||pt-peakTimes[peakTimes.length-1]>400){
+        peakTimes.push(pt);
+        if(peakTimes.length>1){const rr=pt-peakTimes[peakTimes.length-2];if(rr>400&&rr<1500)rrIntervals.push(rr);}
+      }
+    }
+  }
+  if(rrIntervals.length>120)rrIntervals=rrIntervals.slice(-120);
+  if(peakTimes.length>200)peakTimes=peakTimes.slice(-200);
+}
+
+function updateLiveBPM(){
+  if(rrIntervals.length<3)return;
+  const rec=rrIntervals.slice(-8);
+  const bpm=Math.round(60000/(rec.reduce((a,b)=>a+b,0)/rec.length));
+  if(bpm>35&&bpm<160)document.getElementById('live-bpm').textContent=bpm;
+}
+
+function drawPPG(){
+  const w=ppgDrawCv.width,h=ppgDrawCv.height;
+  ppgDrawCtx.clearRect(0,0,w,h);ppgDrawCtx.fillStyle='#fff';ppgDrawCtx.fillRect(0,0,w,h);
+  if(ppgBuf.length<2)return;
+  const disp=ppgBuf.slice(-w);const vals=disp.map(d=>d.val);
+  const minV=Math.min(...vals),maxV=Math.max(...vals),range=maxV-minV||1;
+  ppgDrawCtx.beginPath();ppgDrawCtx.strokeStyle='#1a6b5a';ppgDrawCtx.lineWidth=1.5;
+  disp.forEach((d,i)=>{
+    const x=i*(w/disp.length),y=h-((d.val-minV)/range)*(h*.8)-h*.1;
+    i===0?ppgDrawCtx.moveTo(x,y):ppgDrawCtx.lineTo(x,y);
+  });
+  ppgDrawCtx.stroke();
+}
+
+function measTick(){
+  measElapsed++;
+  const left=MEAS_SEC-measElapsed;
+  document.getElementById('meas-timer').textContent=left>0?left:0;
+  document.getElementById('meas-prog').style.width=(measElapsed/MEAS_SEC*100)+'%';
+  document.getElementById('meas-label').textContent=measElapsed<=5?'ROZGRZEWKA…':'POMIAR HRV';
+  if(measElapsed>=MEAS_SEC){clearInterval(measInterval);stopCamera();finishMeasure();}
+}
+
+function stopCamera(){
+  clearInterval(ppgInterval);ppgInterval=null;
+  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
+  const vid=document.getElementById('camera-video');if(vid)vid.srcObject=null;
+}
+
+function backFromMeasure(){
+  stopCamera();clearInterval(measInterval);
+  showScreen(currentMeasureContext==='session'?'s-active-session':'s-home');
+}
+
+function calcHRV(rr){
+  if(rr.length<8)return null;
+  const sorted=[...rr].sort((a,b)=>a-b);
+  const med=sorted[Math.floor(rr.length/2)];
+  const filtered=rr.filter(v=>Math.abs(v-med)/med<0.25);
+  if(filtered.length<8)return null;
+  const fn=filtered.length;
+  const meanRR=filtered.reduce((a,b)=>a+b,0)/fn;
+  const sdnn=Math.sqrt(filtered.reduce((a,b)=>a+(b-meanRR)**2,0)/fn);
+  let rs=0;for(let i=1;i<fn;i++)rs+=(filtered[i]-filtered[i-1])**2;
+  const rmssd=Math.sqrt(rs/(fn-1));
+  let nn50=0;for(let i=1;i<fn;i++)if(Math.abs(filtered[i]-filtered[i-1])>50)nn50++;
+  const pnn50=nn50/(fn-1)*100;
+  const cv=sdnn/meanRR*100;
+  const mxdmn=(Math.max(...filtered)-Math.min(...filtered))/1000;
+  const bins={};filtered.forEach(v=>{const b=Math.round(v/50)*50;bins[b]=(bins[b]||0)+1;});
+  const amo50=Math.max(...Object.values(bins))/fn*100;
+  return{hr:Math.round(60000/meanRR),meanRR:Math.round(meanRR),sdnn:Math.round(sdnn),
+    rmssd:Math.round(rmssd),pnn50:+pnn50.toFixed(1),cv:+cv.toFixed(1),
+    mxdmn:+mxdmn.toFixed(2),amo50:+amo50.toFixed(1)};
+}
+
+let currentResultEntry=null;
+
+function finishMeasure(){
+  if(rrIntervals.length<10){
+    alert('Za mało danych – sygnał był zbyt słaby.\nSpróbuj ponownie: przyłóż mocno opuszkę palca do kamery.');
+    backFromMeasure();return;
+  }
+  const metrics=calcHRV(rrIntervals);
+  if(!metrics){alert('Nie udało się obliczyć HRV. Spróbuj ponownie.');backFromMeasure();return;}
+  const entry={date:new Date().toISOString(),metrics,rrCount:rrIntervals.length};
+  if(currentMeasureContext==='session'){
+    const s=getActive();if(s){s.measurements.push(entry);saveActive(s);}
+  }
+  currentResultEntry=entry;
+  showResultsScreen(entry);
+}
+
+const NORMS={
+  hr:    {name:'Tętno',   unit:'bpm',lo:45, hi:100, inv:true},
+  sdnn:  {name:'SDNN',    unit:'ms', lo:50, hi:100, inv:false},
+  rmssd: {name:'RMSSD',   unit:'ms', lo:20, hi:80,  inv:false},
+  pnn50: {name:'pNN50',   unit:'%',  lo:5,  hi:40,  inv:false},
+  cv:    {name:'CV',      unit:'',   lo:5.3,hi:7.8, inv:false},
+  mxdmn: {name:'MxDMn',  unit:'s',  lo:.12,hi:.45, inv:false},
+  amo50: {name:'AMo50',   unit:'%',  lo:15, hi:40,  inv:true},
+  meanRR:{name:'Śr. RR', unit:'ms', lo:666,hi:1364, inv:false},
+};
+const LABELS={
+  sdnn: {good:'Zrelaksowany',avg:'Norma',bad:'Obciążony'},
+  rmssd:{good:'Zrelaksowany',avg:'Norma',bad:'Napięcie'},
+  hr:   {good:'Spokojne',   avg:'Norma',bad:'Podwyższone'},
+  pnn50:{good:'Zrelaksowany',avg:'Norma',bad:'Aktywny'},
+  cv:   {good:'Wysoka zmienność',avg:'Norma',bad:'Niska zmienność'},
+  mxdmn:{good:'Duża amplituda',avg:'Norma',bad:'Mała amplituda'},
+  amo50:{good:'Zrelaksowany',avg:'Norma',bad:'Napięcie współcz.'},
+  meanRR:{good:'Spokojne tempo',avg:'Norma',bad:'Szybkie tempo'},
+};
+const DESC={
+  sdnn:  'Główny wskaźnik ogólnego stanu układu autonomicznego. Wyższy = mniej stresu.',
+  rmssd: 'Bezpośredni wskaźnik aktywności nerwu błędnego. Wyższy = bardziej zrelaksowany.',
+  hr:    'Liczba uderzeń serca na minutę. Norma spoczynkowa: 45–100.',
+  pnn50: 'Procent par odstępów RR różniących się o ponad 50ms. Wyższy = spokojniejszy.',
+  cv:    'Współczynnik zmienności rytmu serca. Norma: 5,3–7,8.',
+  mxdmn: 'Różnica między najdłuższym a najkrótszym odstępem RR.',
+  amo50: 'Aktywność układu współczulnego (stresowego). Niższy = mniej napięcia.',
+  meanRR:'Średni czas między uderzeniami serca. Wyższy = wolniejsze, spokojniejsze serce.',
+};
+
+function classify(k,v){
+  const n=NORMS[k];if(!n)return'avg';
+  if(n.inv)return v<n.lo?'good':v<=n.hi?'avg':'bad';
+  return v<n.lo?'bad':v<=n.hi?'avg':'good';
+}
+const BC={good:'b-good',avg:'b-avg',bad:'b-low'};
+
+function showResultsScreen(entry){
+  const m=entry.metrics;
+  const d=new Date(entry.date);
+  document.getElementById('res-date').textContent=
+    d.toLocaleDateString('pl-PL',{weekday:'short',day:'numeric',month:'long'})+' '+
+    d.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+  const s=getActive();
+  const n=s?s.measurements.length:1;
+  document.getElementById('res-tag').textContent=n<=1?'POMIAR BAZOWY':'POMIAR '+n;
+  const grid=document.getElementById('res-metric-grid');grid.innerHTML='';
+  ['sdnn','rmssd','hr','pnn50','cv','mxdmn','amo50','meanRR'].forEach(k=>{
+    const v=m[k];if(v===undefined)return;
+    const cls=classify(k,v);const nr=NORMS[k];
+    const div=document.createElement('div');div.className='mc';
+    div.innerHTML=`<div class="mc-name">${nr.name}</div>
+      <div class="mc-val">${v}<span class="mc-unit"> ${nr.unit}</span></div>
+      <div class="mc-badge ${BC[cls]}">${LABELS[k][cls]}</div>
+      <div class="mc-desc">${DESC[k]}</div>`;
+    grid.appendChild(div);
+  });
+  let title,body;
+  if(m.sdnn>=80&&m.rmssd>=50){title='Układ nerwowy w dobrej formie.';body=`SDNN ${m.sdnn} ms i RMSSD ${m.rmssd} ms powyżej normy. Nerw błędny pracuje sprawnie, układ parasympatyczny dominuje.`;}
+  else if(m.sdnn>=50){title='Wynik w normie.';body=`SDNN ${m.sdnn} ms – dobry stan układu autonomicznego. RMSSD ${m.rmssd} ms wskazuje na aktywny nerw błędny.`;}
+  else if(m.sdnn<30){title='Układ nerwowy przeciążony.';body=`SDNN ${m.sdnn} ms poniżej normy. Może oznaczać niewyspanie, zmęczenie lub stres. Wykonaj ćwiczenie regulacyjne i zmierz po 10 minutach.`;}
+  else{title='Umiarkowany poziom napięcia.';body=`SDNN ${m.sdnn} ms na granicy normy. Regularne ćwiczenia oddechowe i gulgotanie powinny poprawić wynik.`;}
+  if(m.amo50>40)body+=' AMo50 '+m.amo50+'% – widoczna aktywacja układu współczulnego.';
+  if(m.cv>9)body+=' CV '+m.cv+' – wysoka zmienność może oznaczać głęboką regenerację lub duże zmęczenie.';
+  document.getElementById('res-interp-title').textContent=title;
+  document.getElementById('res-interp-body').textContent=body;
+  const cw=document.getElementById('res-compare-wrap');
+  if(s&&s.measurements.length>=2){
+    const base=s.measurements[0].metrics;
+    cw.style.display='block';
+    document.getElementById('res-compare-content').innerHTML=
+      [{k:'sdnn',l:'SDNN',inv:false},{k:'rmssd',l:'RMSSD',inv:false},{k:'hr',l:'HR',inv:true}].map(({k,l,inv})=>{
+        const diff=m[k]-base[k];
+        const better=inv?diff<0:diff>0;const same=Math.abs(diff)<2;
+        const cls=same?'dc-same':better?'dc-good':'dc-bad';
+        return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;color:var(--muted);">${l}</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;">${base[k]} → ${m[k]}</span>
+          <span class="delta-chip ${cls}">${same?'≈':(diff>0?'+':'')+diff}</span>
+        </div>`;
+      }).join('')+'<div style="padding-top:8px;font-size:12px;color:var(--muted);">vs pomiar bazowy tej sesji</div>';
+  }else cw.style.display='none';
+  showScreen('s-results');
+}
+
+function backFromResults(){
+  if(currentMeasureContext==='session')showScreen('s-active-session');
+  else showScreen('s-home');
+}
+
+function drawSessionChart(session,cv){
+  const ms=session.measurements;if(ms.length<2)return;
+  const w=cv.width,h=cv.height;const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const vals=ms.map(m=>m.metrics.sdnn);
+  const minV=Math.min(...vals)-5,maxV=Math.max(...vals)+5,range=maxV-minV||1;
+  const pad={t:14,b:28,l:36,r:10};const cw2=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  ctx.strokeStyle='#e8e4de';ctx.lineWidth=1;
+  [0,.5,1].forEach(f=>{
+    const y=pad.t+ch*(1-f);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#9a9690';ctx.font='10px DM Sans';ctx.textAlign='right';
+    ctx.fillText(Math.round(minV+range*f),pad.l-3,y+4);
+  });
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,'rgba(26,107,90,.15)');grad.addColorStop(1,'rgba(26,107,90,.01)');
+  ctx.beginPath();
+  vals.forEach((v,i)=>{const x=pad.l+(i/(vals.length-1))*cw2;const y=pad.t+ch*(1-(v-minV)/range);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.lineTo(pad.l+cw2,pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='#1a6b5a';ctx.lineWidth=2.5;
+  vals.forEach((v,i)=>{const x=pad.l+(i/(vals.length-1))*cw2;const y=pad.t+ch*(1-(v-minV)/range);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  vals.forEach((v,i)=>{
+    const x=pad.l+(i/(vals.length-1))*cw2;const y=pad.t+ch*(1-(v-minV)/range);
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=i===0?'#1a1a18':'#1a6b5a';ctx.fill();
+    ctx.fillStyle='#1a1a18';ctx.font='bold 11px DM Sans';ctx.textAlign='center';ctx.fillText(v,x,y-8);
+    ctx.fillStyle='#9a9690';ctx.font='9px DM Sans';
+    const elapsed=i===0?'baza':'+'+Math.round((new Date(ms[i].date)-new Date(ms[0].date))/60000)+'m';
+    ctx.fillText(elapsed,x,pad.t+ch+16);
+  });
+}
+
+function renderHome(){
+  const act=getActive();
+  const aw=document.getElementById('active-session-wrap');
+  if(act){
+    aw.style.display='block';
+    const n=act.measurements.length;
+    aw.innerHTML=`<div class="home-session-card">
+      <div class="hsc-top">
+        <div class="hsc-name">▶ ${act.name}</div>
+        <div class="hsc-time">Aktywna · ${n} pomiar${n===1?'':'ów'}</div>
+      </div>
+      <div class="hsc-measurements">
+        ${n===0?'<p style="font-size:12px;color:var(--muted);">Kliknij "Sesja" aby wykonać pierwszy pomiar</p>':
+          act.measurements.map((m,i)=>`<div class="hsc-meas">
+            <div class="hsc-meas-val">${m.metrics.sdnn}</div>
+            <div class="hsc-meas-lbl">${i===0?'BAZA':'+'+Math.round((new Date(m.date)-new Date(act.measurements[0].date))/60000)+'m'}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }else aw.style.display='none';
+  const sessions=getSessions().slice(0,3);
+  const rw=document.getElementById('recent-sessions');
+  if(sessions.length===0){rw.innerHTML='<p style="font-size:13px;color:var(--muted);text-align:center;padding:20px 0;">Utwórz pierwszą sesję pomiarową.</p>';return;}
+  rw.innerHTML='<div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">OSTATNIE SESJE</div>'+
+    sessions.map(s=>`<div class="hist-item" onclick="openSessionDetail('${s.id}')">
+      <div class="hi-top">
+        <div class="hi-name">${s.name}</div>
+        <div class="hi-date">${new Date(s.created).toLocaleDateString('pl-PL',{day:'numeric',month:'short'})}</div>
+      </div>
+      <div class="hi-bottom">
+        <div class="hi-count">${s.measurements.length} pomiar${s.measurements.length===1?'':'ów'}</div>
+        <div class="hi-metrics">
+          ${s.measurements.slice(0,4).map((m,i)=>`<div class="hi-m">
+            <div class="hi-mv" style="color:${i>0&&m.metrics.sdnn>s.measurements[0].metrics.sdnn?'var(--green)':i>0&&m.metrics.sdnn<s.measurements[0].metrics.sdnn?'var(--red)':'inherit'}">${m.metrics.sdnn}</div>
+            <div class="hi-ml">${i===0?'baza':'+'+Math.round((new Date(m.date)-new Date(s.measurements[0].date))/60000)+'m'}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderHistory(){
+  const sessions=getSessions();
+  const wrap=document.getElementById('history-list');
+  if(sessions.length===0){wrap.innerHTML='<p style="font-size:14px;color:var(--muted);text-align:center;padding:24px 0;">Brak zapisanych sesji.</p>';return;}
+  wrap.innerHTML=sessions.map(s=>`<div class="hist-item" onclick="openSessionDetail('${s.id}')">
+    <div class="hi-top">
+      <div class="hi-name">${s.name}</div>
+      <div class="hi-date">${new Date(s.created).toLocaleDateString('pl-PL',{weekday:'short',day:'numeric',month:'long'})}</div>
+    </div>
+    <div class="hi-bottom">
+      <div class="hi-count">📍 ${s.measurements.length} pomiar${s.measurements.length===1?'':'ów'}</div>
+      <div class="hi-metrics">
+        ${s.measurements.map((m,i)=>`<div class="hi-m">
+          <div class="hi-mv" style="color:${i>0&&m.metrics.sdnn>s.measurements[0].metrics.sdnn?'var(--green)':i>0&&m.metrics.sdnn<s.measurements[0].metrics.sdnn?'var(--red)':'inherit'}">${m.metrics.sdnn}</div>
+          <div class="hi-ml">SDNN</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+let currentDetailSession=null;
+function openSessionDetail(id){
+  const s=getSessions().find(ss=>String(ss.id)===String(id));if(!s)return;
+  currentDetailSession=s;
+  document.getElementById('sd-name').textContent=s.name;
+  document.getElementById('sd-date').textContent=new Date(s.created).toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderTimeline(s,'sd-timeline');
+  const cw=document.getElementById('sd-chart-wrap');
+  if(s.measurements.length>=2){
+    cw.style.display='block';
+    const cv=document.getElementById('sd-chart');
+    cv.width=(cw.offsetWidth||400)-36;
+    drawSessionChart(s,cv);
+  }else cw.style.display='none';
+  showScreen('s-session-detail');
+}
+
+function fillSessionForm(){
+  if(!currentDetailSession)return;
+  const s=currentDetailSession;
+  const data=s.measurements.map((m,i)=>{
+    const el=i===0?0:Math.round((new Date(m.date)-new Date(s.measurements[0].date))/60000);
+    return`Pomiar ${i+1} (+${el}min): HR=${m.metrics.hr} SDNN=${m.metrics.sdnn} RMSSD=${m.metrics.rmssd} pNN50=${m.metrics.pnn50}%`;
+  }).join(' | ');
+  document.getElementById('ssf-data').value=`${s.name} | ${new Date(s.created).toLocaleString('pl-PL')} | ${data}`;
+}
+
+function fillSendForm(){
+  const e=currentResultEntry;if(!e)return;const m=e.metrics;
+  const s=getActive();
+  document.getElementById('sf-sess').value=s?s.name:'–';
+  document.getElementById('sf-num').value=s?s.measurements.length:'–';
+  document.getElementById('sf-date').value=new Date(e.date).toLocaleString('pl-PL');
+  document.getElementById('sf-hr').value=m.hr+' bpm';
+  document.getElementById('sf-sdnn').value=m.sdnn+' ms';
+  document.getElementById('sf-rmssd').value=m.rmssd+' ms';
+  document.getElementById('sf-pnn50').value=m.pnn50+'%';
+  document.getElementById('sf-cv').value=m.cv;
+  document.getElementById('sf-mxdmn').value=m.mxdmn+' s';
+  document.getElementById('sf-amo50').value=m.amo50+'%';
+}
+
+function clearAllHistory(){
+  if(confirm('Usunąć całą historię sesji?')){localStorage.removeItem(DB_KEY);renderHistory();}}
+
+window.addEventListener('resize',()=>{resizePPG();});
+renderHome();
+</script>
+</body>
+</html>
