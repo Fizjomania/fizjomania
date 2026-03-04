@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Monitor HRV · Fizjomania</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#f8f7f4; --surface:#fff; --border:#e8e4de;
+  --text:#1a1a18; --muted:#9a9690;
+  --accent:#1a6b5a; --accent-l:#e8f5f2;
+  --green:#276749; --green-l:#c6f6d5;
+  --red:#9b2335; --red-l:#fed7d7;
+  --orange:#c47a15; --orange-l:#fef3cd;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{height:100%;height:-webkit-fill-available;}
+body{height:100%;min-height:100vh;min-height:-webkit-fill-available;
+  background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);
+  overflow:hidden;-webkit-overflow-scrolling:touch;}
+
+.screen{position:fixed;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:flex-start;
+  padding:20px 18px 70px;overflow-y:auto;-webkit-overflow-scrolling:touch;gap:0;}
+.screen.on{display:flex;}
+.screen.centered{justify-content:center;}
+
+/* ── TYPOGRAFIA ── */
+.tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:8px;}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,8vw,52px);font-weight:600;line-height:1.05;text-align:center;margin-bottom:10px;}
+h1 em{font-style:italic;color:var(--accent);}
+h2{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,5vw,32px);font-weight:600;margin-bottom:10px;}
+.subtitle{font-size:clamp(13px,3vw,15px);color:var(--muted);text-align:center;line-height:1.7;max-width:380px;margin-bottom:18px;font-weight:300;}
+
+/* ── PRZYCISKI ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 32px;border-radius:50px;border:none;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all .18s;letter-spacing:.3px;
+  -webkit-user-select:none;user-select:none;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 18px rgba(26,107,90,.25);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(26,107,90,.35);}
+.btn-outline{background:transparent;color:var(--accent);border:1.5px solid var(--accent);}
+.btn-outline:hover{background:var(--accent-l);}
+.btn-sm{padding:10px 22px;font-size:13px;}
+.btn-danger{background:var(--red);color:#fff;}
+
+/* ── KARTY ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;width:100%;max-width:420px;}
+.card-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.card-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
+.card-row:last-child{border-bottom:none;}
+.card-label{font-size:13px;color:var(--muted);font-weight:300;}
+.card-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--text);}
+.card-unit{font-size:11px;color:var(--muted);margin-left:3px;}
+.card-badge{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;display:inline-block;margin-left:6px;}
+.b-good{background:var(--green-l);color:var(--green);}
+.b-avg {background:var(--orange-l);color:var(--orange);}
+.b-low {background:var(--red-l);color:var(--red);}
+.b-hi  {background:#e0eaff;color:#2b4d9b;}
+
+/* ── NAWIGACJA DOLNA ── */
+#nav{position:fixed;bottom:0;left:0;right:0;height:58px;
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-around;
+  z-index:100;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:none;cursor:pointer;padding:8px 14px;
+  color:var(--muted);font-size:10px;letter-spacing:1px;
+  text-transform:uppercase;transition:color .18s;
+  font-family:'DM Sans',sans-serif;}
+.nav-btn.active{color:var(--accent);}
+.nav-icon{font-size:20px;line-height:1;}
+
+/* ── BRAND ── */
+.brand{position:fixed;bottom:70px;left:0;right:0;text-align:center;
+  font-size:10px;color:var(--border);letter-spacing:1px;pointer-events:none;z-index:50;}
+.brand a{color:var(--muted);text-decoration:none;pointer-events:all;}
+
+/* ════════════════════════════
+   EKRAN POMIARU
+════════════════════════════ */
+#s-measure{padding:0;justify-content:flex-start;}
+#measure-bar{width:100%;padding:12px 18px;display:flex;align-items:center;
+  justify-content:space-between;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+#measure-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+#measure-timer{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--text);}
+#measure-prog-wrap{width:100%;height:2px;background:var(--border);flex-shrink:0;}
+#measure-prog{height:100%;background:var(--accent);width:0%;transition:width .5s linear;}
+
+#measure-body{flex:1;width:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:16px;}
+
+/* Video + palec */
+#camera-wrap{position:relative;width:min(200px,55vw);height:min(200px,55vw);flex-shrink:0;}
+#camera-video{width:100%;height:100%;object-fit:cover;border-radius:50%;
+  background:#000;display:block;}
+#finger-overlay{position:absolute;inset:0;border-radius:50%;
+  border:3px solid var(--border);display:flex;align-items:center;
+  justify-content:center;flex-direction:column;gap:4px;
+  background:rgba(248,247,244,.0);pointer-events:none;}
+#signal-ring{position:absolute;inset:-6px;border-radius:50%;
+  border:3px solid transparent;transition:border-color .3s;}
+#signal-ring.weak{border-color:rgba(200,100,10,.4);}
+#signal-ring.good{border-color:rgba(26,107,90,.5);}
+
+#live-bpm-wrap{text-align:center;}
+#live-bpm{font-family:'Cormorant Garamond',serif;font-size:clamp(48px,13vw,72px);
+  font-weight:600;color:var(--accent);line-height:1;}
+#live-bpm-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+
+/* Sygnał PPG */
+#ppg-canvas-wrap{width:min(320px,88vw);height:60px;overflow:hidden;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);}
+#ppg-canvas{display:block;}
+
+#measure-hint{font-size:clamp(12px,3vw,14px);color:var(--muted);
+  text-align:center;max-width:300px;line-height:1.7;font-weight:300;}
+#measure-hint strong{color:var(--text);}
+
+/* Jakość sygnału */
+#quality-bar-wrap{width:min(200px,55vw);height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+#quality-bar{height:100%;background:var(--accent);width:0%;transition:width .3s;}
+#quality-label{font-size:11px;color:var(--muted);text-align:center;letter-spacing:.5px;}
+
+/* ════════════════════════════
+   WYNIKI
+════════════════════════════ */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:420px;}
+.metric-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;}
+.mc-name{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.mc-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--text);line-height:1;}
+.mc-unit{font-size:11px;color:var(--muted);}
+.mc-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;}
+.mc-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-top:6px;font-weight:300;}
+
+.interpret-card{background:var(--accent);color:#fff;border-radius:var(--radius);
+  padding:18px 20px;width:100%;max-width:420px;}
+.ic-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;margin-bottom:8px;}
+.ic-body{font-size:13px;line-height:1.8;opacity:.88;font-weight:300;}
+
+/* ════════════════════════════
+   HISTORIA / WYKRES
+════════════════════════════ */
+#chart-canvas-wrap{width:100%;max-width:420px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);padding:16px;
+  margin-bottom:12px;}
+#chart-canvas{display:block;width:100%;}
+
+.history-list{width:100%;max-width:420px;display:flex;flex-direction:column;gap:8px;}
+.hist-item{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.hi-date{font-size:12px;color:var(--muted);font-weight:300;min-width:80px;}
+.hi-metrics{display:flex;gap:10px;flex-wrap:wrap;}
+.hi-metric{text-align:center;}
+.hi-val{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);line-height:1;}
+.hi-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.hi-badge{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ════════════════════════════
+   PRZED / PO
+════════════════════════════ */
+.pp-grid{display:grid;grid-template-columns:1fr auto 1fr;width:100%;max-width:420px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;margin-bottom:12px;}
+.pp-h{padding:10px 12px;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);text-align:center;}
+.pp-mid-h{border-bottom:1px solid var(--border);border-left:1px solid var(--border);border-right:1px solid var(--border);}
+.pp-cell{padding:12px;text-align:center;border-bottom:1px solid var(--border);}
+.pp-cell:last-child{border-bottom:none;}
+.pp-cell-mid{padding:10px 6px;text-align:center;
+  border-left:1px solid var(--border);border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+.pp-cell-mid:last-child{border-bottom:none;}
+.pp-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;line-height:1;}
+.pp-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.delta-badge{font-size:11px;font-weight:500;padding:3px 7px;border-radius:20px;display:inline-block;}
+.db-good{background:var(--green-l);color:var(--green);}
+.db-bad {background:var(--red-l);color:var(--red);}
+.db-same{background:var(--border);color:var(--muted);}
+
+/* ════════════════════════════
+   USTAWIENIA
+════════════════════════════ */
+.setting-row{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-label{font-size:14px;color:var(--text);}
+.setting-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:300;}
+.setting-control input[type=time]{
+  padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);
+  font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);
+  color:var(--text);outline:none;}
+.setting-control input[type=time]:focus{border-color:var(--accent);}
+
+/* Toggle */
+.toggle{width:44px;height:24px;background:var(--border);border-radius:12px;
+  cursor:pointer;transition:background .2s;position:relative;border:none;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;
+  background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+.toggle.on::after{transform:translateX(20px);}
+
+/* Powiadomienie banner */
+#reminder-banner{display:none;width:100%;max-width:420px;
+  background:var(--accent-l);border:1.5px solid var(--accent);
+  border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;
+  flex-direction:row;align-items:center;justify-content:space-between;gap:10px;}
+#reminder-banner.show{display:flex;}
+.rb-text{font-size:13px;color:var(--accent);font-weight:400;line-height:1.5;}
+.rb-close{background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:2px 6px;}
+
+/* Tabs */
+.tabs{display:flex;width:100%;max-width:420px;gap:6px;margin-bottom:14px;}
+.tab{flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);
+  background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;
+  font-weight:400;cursor:pointer;transition:all .18s;color:var(--muted);}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Input wpisywanie */
+.input-row{display:flex;flex-direction:column;gap:6px;width:100%;}
+.input-row label{font-size:12px;color:var(--muted);letter-spacing:.5px;}
+.input-row input{padding:11px 14px;border-radius:8px;border:1.5px solid var(--border);
+  font-family:'DM Sans',sans-serif;font-size:15px;background:var(--bg);
+  color:var(--text);outline:none;transition:border .2s;width:100%;}
+.input-row input:focus{border-color:var(--accent);}
+
+/* Formspree */
+.form-wrap{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px;}
+.form-wrap input{padding:11px 14px;border-radius:8px;border:1.5px solid var(--border);
+  font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);
+  outline:none;transition:border .2s;}
+.form-wrap input:focus{border-color:var(--accent);}
+
+/* Home stats */
+.home-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:420px;margin-bottom:12px;}
+.hs-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-align:center;}
+.hs-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--accent);line-height:1;}
+.hs-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:3px;}
+.hs-trend{font-size:11px;margin-top:4px;}
+
+/* Separator */
+.sep{width:100%;max-width:420px;height:1px;background:var(--border);margin:10px 0;}
+.btns-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ DOM EKRANÓW ═══════════════ -->
+
+<!-- HOME -->
+<div class="screen on centered" id="s-home">
+  <div id="reminder-banner">
+    <div class="rb-text">🌅 Czas na poranny pomiar HRV!</div>
+    <button class="rb-close" onclick="closeBanner()">✕</button>
+  </div>
+  <div class="tag">Fizjomania · Monitor HRV</div>
+  <h1>Twój<br><em>układ nerwowy</em></h1>
+  <p class="subtitle" id="home-subtitle">Zmierz HRV kamerą telefonu.<br>Śledź trend swojego układu nerwowego.</p>
+
+  <div class="home-stats" id="home-stats" style="display:none"></div>
+
+  <div class="card" style="margin-bottom:14px;max-width:420px;" id="last-measure-card" style="display:none">
+    <div class="card-title">Ostatni pomiar</div>
+    <div id="last-measure-content"></div>
+  </div>
+
+  <div class="btns-row" style="margin-bottom:10px;">
+    <button class="btn btn-primary" onclick="startMeasureFlow('morning')">📍 Pomiar poranny</button>
+    <button class="btn btn-outline" onclick="startMeasureFlow('exercise')">🏃 Przed/Po ćwiczeniu</button>
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="showScreen('s-history')">📊 Historia</button>
+</div>
+
+<!-- POMIAR -->
+<div class="screen" id="s-measure">
+  <div id="measure-bar">
+    <div id="measure-label">POMIAR HRV</div>
+    <div id="measure-timer">60</div>
+  </div>
+  <div id="measure-prog-wrap"><div id="measure-prog"></div></div>
+  <div id="measure-body">
+    <div id="measure-hint">
+      <strong>Przyłóż opuszkę palca wskazującego</strong><br>
+      do tylnej kamery – przykryj cały obiektyw.<br>
+      Trzymaj nieruchomo. Nie naciskaj mocno.
+    </div>
+
+    <div id="camera-wrap">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <div id="signal-ring"></div>
+      <div id="finger-overlay">
+        <span style="font-size:28px;">☝️</span>
+        <span style="font-size:11px;color:var(--muted);letter-spacing:1px;">PRZYŁÓŻ PALEC</span>
+      </div>
+    </div>
+
+    <div id="live-bpm-wrap">
+      <div id="live-bpm">–</div>
+      <div id="live-bpm-label">uderzeń / min</div>
+    </div>
+
+    <div id="ppg-canvas-wrap">
+      <canvas id="ppg-canvas" height="60"></canvas>
+    </div>
+
+    <div id="quality-bar-wrap"><div id="quality-bar"></div></div>
+    <div id="quality-label">Czekam na sygnał…</div>
+  </div>
+</div>
+
+<!-- WYNIKI -->
+<div class="screen" id="s-results">
+  <div style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;">
+    <div>
+      <div class="tag" style="text-align:left;margin-bottom:2px;" id="result-tag">WYNIKI POMIARU</div>
+      <div style="font-size:12px;color:var(--muted);" id="result-date"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="showScreen('s-home')">← Wróć</button>
+  </div>
+
+  <div class="metric-grid" id="metrics-grid"></div>
+
+  <div style="height:10px;flex-shrink:0;"></div>
+  <div class="interpret-card" id="interpret-card" style="margin-bottom:12px;">
+    <div class="ic-title" id="ic-title">Interpretacja</div>
+    <div class="ic-body" id="ic-body"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;" id="result-save-card">
+    <div class="card-title">Wyślij wyniki fizjoterapeucie</div>
+    <form action="https://formspree.io/f/maqdkyrj" method="POST" target="_blank"
+          onsubmit="fillResultForm()" class="form-wrap">
+      <input type="text"  name="name"  placeholder="Twoje imię" required>
+      <input type="email" name="email" placeholder="Twój e-mail" required>
+      <input type="hidden" name="data_pomiaru"   id="rf-date">
+      <input type="hidden" name="HR_bpm"         id="rf-hr">
+      <input type="hidden" name="SDNN_ms"        id="rf-sdnn">
+      <input type="hidden" name="RMSSD_ms"       id="rf-rmssd">
+      <input type="hidden" name="pNN50_proc"     id="rf-pnn50">
+      <input type="hidden" name="MeanRR_ms"      id="rf-rr">
+      <input type="hidden" name="CV_proc"        id="rf-cv">
+      <input type="hidden" name="MxDMn_s"        id="rf-mxdmn">
+      <input type="hidden" name="AMo50_proc"     id="rf-amo50">
+      <input type="hidden" name="typ_pomiaru"    id="rf-type">
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Wyślij wyniki →</button>
+    </form>
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="showScreen('s-history')">📊 Zobacz historię</button>
+</div>
+
+<!-- PRZED/PO -->
+<div class="screen" id="s-compare">
+  <div class="tag">Porównanie · Przed / Po</div>
+  <h1 style="font-size:clamp(26px,6vw,40px);margin-bottom:8px;">Przed<br><em>i po ćwiczeniu</em></h1>
+
+  <div id="pp-state-before" style="width:100%;max-width:420px;">
+    <p class="subtitle">Wykonaj pomiar <strong>przed</strong> ćwiczeniem regulacyjnym.</p>
+    <button class="btn btn-primary" onclick="startMeasureFlow('before')">Pomiar PRZED ćwiczeniem →</button>
+  </div>
+
+  <div id="pp-state-after" style="display:none;width:100%;max-width:420px;display:none;">
+    <div class="card" style="margin-bottom:12px;" id="pp-before-card">
+      <div class="card-title">Pomiar PRZED</div>
+      <div id="pp-before-content"></div>
+    </div>
+    <p class="subtitle">Teraz wykonaj ćwiczenie regulacyjne, a potem zmierz ponownie.</p>
+    <button class="btn btn-primary" onclick="startMeasureFlow('after')">Pomiar PO ćwiczeniu →</button>
+  </div>
+
+  <div id="pp-state-result" style="display:none;width:100%;max-width:420px;display:none;">
+    <div class="pp-grid" id="pp-grid"></div>
+    <div class="interpret-card" id="pp-interpret" style="margin-bottom:12px;">
+      <div class="ic-title" id="pp-title">Porównanie</div>
+      <div class="ic-body" id="pp-body"></div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="resetCompare()">Nowe porównanie</button>
+  </div>
+</div>
+
+<!-- HISTORIA -->
+<div class="screen" id="s-history">
+  <div class="tag">Historia pomiarów</div>
+  <h1 style="font-size:clamp(26px,6vw,40px);margin-bottom:10px;">Twój<br><em>trend</em></h1>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchChartMetric('sdnn',this)">SDNN</button>
+    <button class="tab" onclick="switchChartMetric('rmssd',this)">RMSSD</button>
+    <button class="tab" onclick="switchChartMetric('hr',this)">HR</button>
+    <button class="tab" onclick="switchChartMetric('cv',this)">CV</button>
+  </div>
+
+  <div id="chart-canvas-wrap">
+    <canvas id="chart-canvas" height="140"></canvas>
+  </div>
+
+  <div class="history-list" id="history-list"></div>
+
+  <div class="btns-row" style="margin-top:10px;">
+    <button class="btn btn-outline btn-sm" onclick="exportHistory()">📧 Wyślij historię</button>
+    <button class="btn btn-sm btn-danger" onclick="clearHistory()">🗑 Wyczyść</button>
+  </div>
+</div>
+
+<!-- USTAWIENIA -->
+<div class="screen" id="s-settings">
+  <div class="tag">Ustawienia</div>
+  <h1 style="font-size:clamp(26px,6vw,40px);margin-bottom:14px;">Preferencje</h1>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">Przypomnienie o pomiarze</div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Powiadomienie poranne</div>
+        <div class="setting-sub">Przypomni o pomiarze bazowym</div>
+      </div>
+      <div class="setting-control">
+        <button class="toggle" id="remind-toggle" onclick="toggleReminder()"></button>
+      </div>
+    </div>
+    <div class="setting-row" id="remind-time-row">
+      <div class="setting-label">Godzina przypomnienia</div>
+      <div class="setting-control">
+        <input type="time" id="remind-time" value="07:00" onchange="saveReminderTime()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">Informacje</div>
+    <div class="setting-row">
+      <div class="setting-label">Czas pomiaru</div>
+      <div style="font-size:14px;color:var(--muted);">60 sekund</div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">Metoda</div>
+      <div style="font-size:14px;color:var(--muted);">PPG kamera</div>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Pomiarów zapisanych</div>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;" id="settings-count">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fizjomania</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;font-weight:300;">
+      Aplikacja stworzona przez <strong style="color:var(--text);">Annę Pietruch</strong> – Fizjomania Jarosław.<br>
+      Wyniki są informacyjne i nie zastępują diagnozy lekarskiej.
+    </p>
+    <div style="margin-top:10px;">
+      <a href="https://www.fizjomania-jaroslaw.pl" target="_blank" style="color:var(--accent);font-size:13px;">www.fizjomania-jaroslaw.pl</a>
+    </div>
+  </div>
+</div>
+
+<!-- NAWIGACJA DOLNA -->
+<nav id="nav">
+  <button class="nav-btn active" onclick="showScreen('s-home')" id="nav-home">
+    <span class="nav-icon">🏠</span><span>Start</span>
+  </button>
+  <button class="nav-btn" onclick="showScreen('s-measure')" id="nav-measure">
+    <span class="nav-icon">📍</span><span>Pomiar</span>
+  </button>
+  <button class="nav-btn" onclick="showScreen('s-compare')" id="nav-compare">
+    <span class="nav-icon">⚖️</span><span>Przed/Po</span>
+  </button>
+  <button class="nav-btn" onclick="showScreen('s-history')" id="nav-history">
+    <span class="nav-icon">📊</span><span>Historia</span>
+  </button>
+  <button class="nav-btn" onclick="showScreen('s-settings')" id="nav-settings">
+    <span class="nav-icon">⚙️</span><span>Ustawienia</span>
+  </button>
+</nav>
+
+<div class="brand"><a href="https://www.fizjomania-jaroslaw.pl" target="_blank">Fizjomania – Anna Pietruch</a></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('fizjo_hrv_history') || '[]'); }
+  catch(e) { return []; }
+}
+function saveHistory(arr) {
+  localStorage.setItem('fizjo_hrv_history', JSON.stringify(arr));
+}
+function addMeasurement(data) {
+  const hist = getHistory();
+  hist.unshift(data); // newest first
+  if (hist.length > 60) hist.pop();
+  saveHistory(hist);
+}
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem('fizjo_hrv_settings') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveSettings(s) { localStorage.setItem('fizjo_hrv_settings', JSON.stringify(s)); }
+
+// ══════════════════════════════════════════════
+// NAWIGACJA
+// ══════════════════════════════════════════════
+let currentScreen = 's-home';
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navMap = {'s-home':'nav-home','s-measure':'nav-measure','s-compare':'nav-compare','s-history':'nav-history','s-settings':'nav-settings','s-results':'nav-measure'};
+  if (navMap[id]) document.getElementById(navMap[id])?.classList.add('active');
+  currentScreen = id;
+  if (id === 's-history') renderHistory();
+  if (id === 's-home') renderHome();
+  if (id === 's-settings') renderSettings();
+}
+
+// ══════════════════════════════════════════════
+// PPG ENGINE
+// ══════════════════════════════════════════════
+const SAMPLE_W    = 20;   // canvas próbkowania (małe dla wydajności)
+const SAMPLE_H    = 20;
+const MEAS_SEC    = 60;
+const WARMUP_SEC  = 5;    // ignoruj pierwsze 5s
+const FPS_TARGET  = 30;
+
+let videoStream    = null;
+let ppgInterval    = null;
+let measureInterval= null;
+let sampCanvas     = null;
+let sampCtx        = null;
+let ppgBuffer      = [];      // [{val, t}]
+let peakTimes      = [];      // timestamps szczytów (ms)
+let rrIntervals    = [];      // odstępy RR (ms)
+let measureElapsed = 0;
+let measureType    = 'morning'; // morning | before | after
+let lastFrameT     = 0;
+let signalQuality  = 0;       // 0–100
+
+// PPG canvas wizualizacja
+const ppgDrawCv = document.getElementById('ppg-canvas');
+const ppgDrawCtx = ppgDrawCv.getContext('2d');
+
+function resizePPGCanvas() {
+  const wrap = document.getElementById('ppg-canvas-wrap');
+  ppgDrawCv.width  = wrap.offsetWidth || 320;
+  ppgDrawCv.height = 60;
+}
+
+function drawPPGSignal() {
+  const w = ppgDrawCv.width, h = ppgDrawCv.height;
+  ppgDrawCtx.clearRect(0, 0, w, h);
+  ppgDrawCtx.fillStyle = '#fff';
+  ppgDrawCtx.fillRect(0, 0, w, h);
+  if (ppgBuffer.length < 2) return;
+
+  const display = ppgBuffer.slice(-w);
+  const vals = display.map(d => d.val);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+
+  ppgDrawCtx.beginPath();
+  ppgDrawCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1a6b5a';
+  ppgDrawCtx.lineWidth = 1.5;
+  display.forEach((d, i) => {
+    const x = i * (w / display.length);
+    const y = h - ((d.val - minV) / range) * (h * 0.8) - h * 0.1;
+    i === 0 ? ppgDrawCtx.moveTo(x, y) : ppgDrawCtx.lineTo(x, y);
+  });
+  ppgDrawCtx.stroke();
+}
+
+async function startCamera() {
+  try {
+    const constraints = {
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 320 },
+        height: { ideal: 240 },
+        // Próba włączenia latarki
+        advanced: [{ torch: true }]
+      }
+    };
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch(e) {
+      // Bez latarki (iOS)
+      videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+    }
+    const video = document.getElementById('camera-video');
+    video.srcObject = videoStream;
+    await video.play();
+
+    // Ukryj overlay po uruchomieniu kamery
+    setTimeout(() => {
+      document.getElementById('finger-overlay').style.opacity = '0';
+    }, 2000);
+
+    // Setup próbkowania
+    sampCanvas = document.createElement('canvas');
+    sampCanvas.width = SAMPLE_W; sampCanvas.height = SAMPLE_H;
+    sampCtx = sampCanvas.getContext('2d');
+
+    ppgBuffer = []; peakTimes = []; rrIntervals = [];
+    measureElapsed = 0;
+
+    // Próbkowanie PPG
+    ppgInterval = setInterval(samplePPG, 1000 / FPS_TARGET);
+
+  } catch(err) {
+    alert('Nie mogę uruchomić kamery: ' + err.message + '\n\nSprawdź uprawnienia do kamery w ustawieniach.');
+    showScreen('s-home');
+  }
+}
+
+function samplePPG() {
+  const video = document.getElementById('camera-video');
+  if (!video || !sampCtx || video.readyState < 2) return;
+
+  sampCtx.drawImage(video, 0, 0, SAMPLE_W, SAMPLE_H);
+  const data = sampCtx.getImageData(0, 0, SAMPLE_W, SAMPLE_H).data;
+
+  let r = 0;
+  for (let i = 0; i < data.length; i += 4) r += data[i];
+  const avg = r / (data.length / 4);
+
+  const t = Date.now();
+  ppgBuffer.push({ val: avg, t });
+
+  // Utrzymuj max 10 sekund bufora
+  const cutoff = t - 10000;
+  while (ppgBuffer.length > 0 && ppgBuffer[0].t < cutoff) ppgBuffer.shift();
+
+  // Oceń jakość – czy palec jest przyłożony (czerwony kanał wysoki)
+  signalQuality = Math.min(100, Math.max(0, (avg - 50) / 1.5));
+  document.getElementById('quality-bar').style.width = signalQuality + '%';
+
+  if (signalQuality > 40) {
+    document.getElementById('quality-label').textContent = signalQuality > 70 ? '✓ Dobry sygnał' : 'Sygnał słaby – przyciśnij mocniej';
+    document.getElementById('signal-ring').className = signalQuality > 70 ? 'good' : 'weak';
+  } else {
+    document.getElementById('quality-label').textContent = 'Przyłóż palec do kamery';
+    document.getElementById('signal-ring').className = '';
+  }
+
+  // Detekcja szczytów (tylko gdy dobry sygnał)
+  if (signalQuality > 50 && ppgBuffer.length > 30) {
+    detectPeaks();
+    updateLiveBPM();
+  }
+
+  drawPPGSignal();
+}
+
+function detectPeaks() {
+  const buf = ppgBuffer;
+  if (buf.length < 20) return;
+
+  // Używaj ostatnich 6 sekund
+  const recent = buf.slice(-180);
+  const vals = recent.map(d => d.val);
+
+  // Normalizuj
+  const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const sd   = Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length);
+
+  const minPeakDist = 15; // min 15 próbek między szczytami (~0.5s = max 120bpm)
+  let lastPeak = -999;
+
+  for (let i = 2; i < recent.length - 2; i++) {
+    const v = recent[i].val;
+    // Szczyt: wyższy niż sąsiedzi + powyżej średniej + odpowiednia odległość
+    if (v > recent[i-1].val && v > recent[i-2].val &&
+        v > recent[i+1].val && v > recent[i+2].val &&
+        v > mean + sd * 0.2 &&
+        i - lastPeak > minPeakDist) {
+      lastPeak = i;
+      const peakT = recent[i].t;
+      // Dodaj tylko nowe szczyty
+      if (peakTimes.length === 0 || peakT - peakTimes[peakTimes.length-1] > 400) {
+        peakTimes.push(peakT);
+        if (peakTimes.length > 1) {
+          const rr = peakT - peakTimes[peakTimes.length-2];
+          // Fizjologiczne RR: 400–1500ms (40–150 bpm)
+          if (rr > 400 && rr < 1500) {
+            rrIntervals.push(rr);
+          }
+        }
+      }
+    }
+  }
+
+  // Utrzymuj max 120 ostatnich interwałów
+  if (rrIntervals.length > 120) rrIntervals = rrIntervals.slice(-120);
+  if (peakTimes.length > 200)   peakTimes   = peakTimes.slice(-200);
+}
+
+function updateLiveBPM() {
+  if (rrIntervals.length < 3) return;
+  const recent = rrIntervals.slice(-8);
+  const meanRR = recent.reduce((a,b)=>a+b,0)/recent.length;
+  const bpm = Math.round(60000 / meanRR);
+  if (bpm > 35 && bpm < 160) {
+    document.getElementById('live-bpm').textContent = bpm;
+  }
+}
+
+function stopCamera() {
+  clearInterval(ppgInterval);
+  ppgInterval = null;
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+  const video = document.getElementById('camera-video');
+  if (video) { video.srcObject = null; }
+}
+
+// ══════════════════════════════════════════════
+// FLOW POMIARU
+// ══════════════════════════════════════════════
+function startMeasureFlow(type) {
+  measureType = type;
+  if (type === 'before') {
+    ppBeforeData = null; ppAfterData = null;
+    showPPState('before');
+    showScreen('s-compare');
+    return;
+  }
+  if (type === 'after') {
+    showScreen('s-compare');
+  }
+  launchMeasure();
+}
+
+function launchMeasure() {
+  measureElapsed = 0;
+  ppgBuffer = []; peakTimes = []; rrIntervals = [];
+  document.getElementById('live-bpm').textContent = '–';
+  document.getElementById('measure-prog').style.width = '0%';
+  document.getElementById('measure-timer').textContent = MEAS_SEC;
+  document.getElementById('finger-overlay').style.opacity = '1';
+  document.getElementById('signal-ring').className = '';
+  resizePPGCanvas();
+  showScreen('s-measure');
+  startCamera();
+
+  measureInterval = setInterval(measureTick, 1000);
+}
+
+function measureTick() {
+  measureElapsed++;
+  const left = MEAS_SEC - measureElapsed;
+  document.getElementById('measure-timer').textContent = left > 0 ? left : 0;
+  document.getElementById('measure-prog').style.width = (measureElapsed / MEAS_SEC * 100) + '%';
+
+  if (measureElapsed <= WARMUP_SEC) {
+    document.getElementById('measure-label').textContent = 'ROZGRZEWKA…';
+  } else {
+    document.getElementById('measure-label').textContent = 'POMIAR HRV';
+  }
+
+  if (measureElapsed >= MEAS_SEC) {
+    clearInterval(measureInterval);
+    stopCamera();
+    finishMeasure();
+  }
+}
+
+function finishMeasure() {
+  if (rrIntervals.length < 10) {
+    alert('Za mało danych – sygnał był zbyt słaby.\nSpróbuj ponownie: przyłóż opuszkę palca mocno do kamery, w ciemnym pomieszczeniu lub z latarką.');
+    showScreen('s-home');
+    return;
+  }
+
+  const metrics = calculateHRV(rrIntervals);
+  const now = new Date();
+  const entry = {
+    date: now.toISOString(),
+    type: measureType,
+    metrics,
+    rrCount: rrIntervals.length,
+  };
+
+  addMeasurement(entry);
+  currentResult = entry;
+
+  if (measureType === 'before') {
+    ppBeforeData = entry;
+    showPPState('after');
+    showScreen('s-compare');
+    renderPPBefore();
+    return;
+  }
+  if (measureType === 'after') {
+    ppAfterData = entry;
+    showPPState('result');
+    renderPPResult();
+    showScreen('s-compare');
+    return;
+  }
+
+  // Zwykły pomiar
+  showResults(entry);
+}
+
+// ══════════════════════════════════════════════
+// OBLICZENIA HRV
+// ══════════════════════════════════════════════
+function calculateHRV(rr) {
+  const n = rr.length;
+  // Usuń outliers (>20% od mediany)
+  const sorted = [...rr].sort((a,b)=>a-b);
+  const med = sorted[Math.floor(n/2)];
+  const filtered = rr.filter(v => Math.abs(v-med)/med < 0.25);
+  if (filtered.length < 8) return null;
+
+  const fn = filtered.length;
+  const meanRR = filtered.reduce((a,b)=>a+b,0) / fn;
+  const hr     = Math.round(60000 / meanRR);
+
+  // SDNN
+  const sdnn = Math.sqrt(filtered.reduce((a,b)=>a+(b-meanRR)**2,0)/fn);
+
+  // RMSSD
+  let rmssdSum = 0;
+  for (let i=1; i<fn; i++) rmssdSum += (filtered[i]-filtered[i-1])**2;
+  const rmssd = Math.sqrt(rmssdSum / (fn-1));
+
+  // pNN50
+  let nn50 = 0;
+  for (let i=1; i<fn; i++) if (Math.abs(filtered[i]-filtered[i-1]) > 50) nn50++;
+  const pnn50 = (nn50/(fn-1)*100);
+
+  // CV
+  const cv = (sdnn/meanRR*100);
+
+  // MxDMn
+  const mxdmn = (Math.max(...filtered) - Math.min(...filtered)) / 1000;
+
+  // AMo50 – mode amplitude
+  const bins = {};
+  filtered.forEach(v => {
+    const bin = Math.round(v/50)*50;
+    bins[bin] = (bins[bin]||0)+1;
+  });
+  const modeCount = Math.max(...Object.values(bins));
+  const amo50 = (modeCount/fn*100);
+
+  return {
+    hr:    Math.round(hr),
+    meanRR:Math.round(meanRR),
+    sdnn:  Math.round(sdnn),
+    rmssd: Math.round(rmssd),
+    pnn50: parseFloat(pnn50.toFixed(1)),
+    cv:    parseFloat(cv.toFixed(1)),
+    mxdmn: parseFloat(mxdmn.toFixed(2)),
+    amo50: parseFloat(amo50.toFixed(1)),
+  };
+}
+
+// ══════════════════════════════════════════════
+// INTERPRETACJA PL
+// ══════════════════════════════════════════════
+const NORMS = {
+  hr:    { low:[0,45],    avg:[45,100],   hi:[100,999],   unit:'bpm',   name:'Tętno',       lowerBetter:true  },
+  meanRR:{ low:[0,666],   avg:[666,1364], hi:[1364,9999], unit:'ms',    name:'Średni RR',   lowerBetter:false },
+  sdnn:  { low:[0,50],    avg:[50,100],   hi:[100,999],   unit:'ms',    name:'SDNN',        lowerBetter:false },
+  rmssd: { low:[0,20],    avg:[20,80],    hi:[80,999],    unit:'ms',    name:'RMSSD',       lowerBetter:false },
+  pnn50: { low:[0,5],     avg:[5,40],     hi:[40,100],    unit:'%',     name:'pNN50',       lowerBetter:false },
+  cv:    { low:[0,5.3],   avg:[5.3,7.8],  hi:[7.8,99],    unit:'',      name:'CV',          lowerBetter:false },
+  mxdmn: { low:[0,0.12],  avg:[0.12,0.45],hi:[0.45,9],    unit:'s',     name:'MxDMn',       lowerBetter:false },
+  amo50: { low:[40,100],  avg:[15,40],    hi:[0,15],      unit:'%',     name:'AMo50',       lowerBetter:true  },
+};
+
+function classifyMetric(key, val) {
+  const n = NORMS[key];
+  if (!n) return 'avg';
+  if (key === 'amo50') {
+    if (val >= n.low[0])  return 'low';
+    if (val >= n.avg[0])  return 'avg';
+    return 'hi';
+  }
+  if (val < n.low[1])  return 'low';
+  if (val <= n.avg[1]) return 'avg';
+  return 'hi';
+}
+
+const CLASS_LABEL = { low:'Niska', avg:'Norma', hi:'Wysoka' };
+const CLASS_PL = {
+  hr:    { low:'Bardzo spokojne',    avg:'Prawidłowe',    hi:'Podwyższone'     },
+  sdnn:  { low:'Obciążony',          avg:'Dobry',         hi:'Bardzo dobry'    },
+  rmssd: { low:'Napięcie',           avg:'Dobry',         hi:'Zrelaksowany'    },
+  pnn50: { low:'Aktywny',            avg:'Norma',         hi:'Zrelaksowany'    },
+  cv:    { low:'Obniżona zmienność', avg:'Zrównoważony',  hi:'Wysoka zmienność'},
+  mxdmn: { low:'Mała amplituda',     avg:'Zrównoważony',  hi:'Duża amplituda'  },
+  amo50: { low:'Zrelaksowany',       avg:'Zrównoważony',  hi:'Napięcie'        },
+  meanRR:{ low:'Szybkie tempo',      avg:'Zrównoważony',  hi:'Spokojne tempo'  },
+};
+
+const BADGE_COLOR = { low:'b-low', avg:'b-avg', hi:'b-good' };
+// Dla metryk gdzie wyższe = gorsze (hr, amo50)
+const BADGE_COLOR_INV = { low:'b-good', avg:'b-avg', hi:'b-low' };
+
+function badgeClass(key, cls) {
+  const inv = ['hr','amo50'];
+  return inv.includes(key) ? BADGE_COLOR_INV[cls] : BADGE_COLOR[cls];
+}
+
+const METRIC_DESC = {
+  hr:    'Liczba uderzeń serca na minutę.',
+  meanRR:'Średni czas między uderzeniami. Im wyższy, tym mniej stresu.',
+  sdnn:  'Odchylenie std. odstępów RR. Główny wskaźnik ogólnego stanu ANS.',
+  rmssd: 'Wskaźnik aktywności nerwu błędnego. Wyższy = spokojniejszy układ.',
+  pnn50: 'Procent par odstępów różniących się >50ms. Wyższy = bardziej zrelaksowany.',
+  cv:    'Współczynnik zmienności. Norma: 5,3–7,8.',
+  mxdmn: 'Różnica między najdłuższym a najkrótszym RR.',
+  amo50: 'Aktywność układu współczulnego. Niższy = mniej stresu.',
+};
+
+function buildInterpretation(m) {
+  const sdnnC = classifyMetric('sdnn', m.sdnn);
+  const rmssdC= classifyMetric('rmssd', m.rmssd);
+  const hrC   = classifyMetric('hr', m.hr);
+  const cvC   = classifyMetric('cv', m.cv);
+
+  const good = [sdnnC==='hi'||sdnnC==='avg', rmssdC==='hi'||rmssdC==='avg', hrC==='avg'||hrC==='low'].filter(Boolean).length;
+
+  let title, body;
+  if (m.sdnn >= 80 && m.rmssd >= 50) {
+    title = 'Układ nerwowy w dobrej formie.';
+    body  = `SDNN ${m.sdnn} ms i RMSSD ${m.rmssd} ms – obydwa powyżej normy. Nerw błędny pracuje sprawnie, układ parasympatyczny dominuje. Dobry moment na wymagające zadania lub intensywny trening.`;
+  } else if (m.sdnn >= 50 && m.rmssd >= 20) {
+    title = 'Wynik w normie.';
+    body  = `SDNN ${m.sdnn} ms – dobry stan układu autonomicznego. RMSSD ${m.rmssd} ms wskazuje na aktywny nerw błędny. Ciało radzi sobie ze stresem.`;
+  } else if (m.sdnn < 30) {
+    title = 'Układ nerwowy przeciążony.';
+    body  = `SDNN ${m.sdnn} ms jest poniżej normy. Może oznaczać niewyspanie, duże zmęczenie lub długotrwały stres. Warto wykonać ćwiczenia regulacyjne i zmierzyć ponownie po 20 minutach.`;
+  } else {
+    title = 'Umiarkowany poziom napięcia.';
+    body  = `SDNN ${m.sdnn} ms – na granicy normy. RMSSD ${m.rmssd} ms sugeruje nieznaczne napięcie układu nerwowego. Regularne ćwiczenia oddechowe powinny poprawić wynik.`;
+  }
+
+  if (m.cv > 9) body += ' CV ' + m.cv + ' – wysoka zmienność może wskazywać na głęboką regenerację lub duże zmęczenie.';
+  if (m.amo50 > 40) body += ' AMo50 ' + m.amo50 + '% – widoczna aktywacja układu współczulnego (stres).';
+
+  return { title, body };
+}
+
+// ══════════════════════════════════════════════
+// WYŚWIETLANIE WYNIKÓW
+// ══════════════════════════════════════════════
+let currentResult = null;
+
+function showResults(entry) {
+  const m = entry.metrics;
+  if (!m) { showScreen('s-home'); return; }
+
+  const d = new Date(entry.date);
+  document.getElementById('result-date').textContent =
+    d.toLocaleDateString('pl-PL', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
+    + ' ' + d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'});
+
+  const typeLabel = { morning:'Pomiar poranny', exercise:'Pomiar przy ćwiczeniu', before:'Przed ćwiczeniem', after:'Po ćwiczeniu' };
+  document.getElementById('result-tag').textContent = typeLabel[entry.type] || 'Wyniki pomiaru';
+
+  // Siatka metryk
+  const grid = document.getElementById('metrics-grid');
+  grid.innerHTML = '';
+  const order = ['hr','meanRR','sdnn','rmssd','pnn50','cv','mxdmn','amo50'];
+  order.forEach(key => {
+    const val = m[key];
+    if (val === undefined) return;
+    const cls = classifyMetric(key, val);
+    const bc  = badgeClass(key, cls);
+    const n   = NORMS[key];
+    const card = document.createElement('div');
+    card.className = 'metric-card';
+    card.innerHTML = `
+      <div class="mc-name">${n.name}</div>
+      <div class="mc-val">${val}<span class="mc-unit">${n.unit}</span></div>
+      <div class="mc-badge ${bc}">${CLASS_PL[key][cls]}</div>
+      <div class="mc-desc">${METRIC_DESC[key]}</div>`;
+    grid.appendChild(card);
+  });
+
+  // Interpretacja
+  const interp = buildInterpretation(m);
+  document.getElementById('ic-title').textContent = interp.title;
+  document.getElementById('ic-body').textContent  = interp.body;
+
+  currentResult = entry;
+  showScreen('s-results');
+}
+
+// ══════════════════════════════════════════════
+// PRZED / PO
+// ══════════════════════════════════════════════
+let ppBeforeData = null, ppAfterData = null;
+
+function showPPState(state) {
+  document.getElementById('pp-state-before').style.display = state==='before' ? 'block' : 'none';
+  document.getElementById('pp-state-after').style.display  = state==='after'  ? 'block' : 'none';
+  document.getElementById('pp-state-result').style.display = state==='result' ? 'block' : 'none';
+}
+
+function renderPPBefore() {
+  const m = ppBeforeData?.metrics;
+  if (!m) return;
+  document.getElementById('pp-before-content').innerHTML =
+    `<div style="display:flex;gap:14px;flex-wrap:wrap;">
+      ${['sdnn','rmssd','hr'].map(k=>`<div><div class="hi-val">${m[k]}</div><div class="hi-lbl">${NORMS[k].name} ${NORMS[k].unit}</div></div>`).join('')}
+    </div>`;
+}
+
+function renderPPResult() {
+  const b = ppBeforeData?.metrics, a = ppAfterData?.metrics;
+  if (!b || !a) return;
+
+  const keys = ['sdnn','rmssd','hr','pnn50'];
+  const labels = { sdnn:'SDNN ms', rmssd:'RMSSD ms', hr:'HR bpm', pnn50:'pNN50 %' };
+
+  let html = '';
+  // Header
+  html += `<div class="pp-h">PRZED</div><div class="pp-mid-h"></div><div class="pp-h">PO</div>`;
+  keys.forEach((k,i) => {
+    const vb = b[k], va = a[k];
+    const diff = va - vb;
+    const better = k === 'hr' || k === 'amo50' ? diff < 0 : diff > 0;
+    const same = Math.abs(diff) < 1;
+    const dc = same ? 'db-same' : better ? 'db-good' : 'db-bad';
+    const sign = diff > 0 ? '+' : '';
+    const last = i === keys.length-1;
+    html += `<div class="pp-cell${last?' style="border-bottom:none"':''}">`+
+              `<div class="pp-val">${vb}</div><div class="pp-lbl">${labels[k]}</div></div>`;
+    html += `<div class="pp-cell-mid${last?' style="border-bottom:none"':''}">
+              <span class="delta-badge ${dc}">${same?'≈':sign+diff}</span></div>`;
+    html += `<div class="pp-cell${last?' style="border-bottom:none"':''}">`+
+              `<div class="pp-val">${va}</div><div class="pp-lbl">${labels[k]}</div></div>`;
+  });
+  document.getElementById('pp-grid').innerHTML = html;
+
+  // Interpretacja przed/po
+  const sdnnDiff = a.sdnn - b.sdnn;
+  const rmssdDiff = a.rmssd - b.rmssd;
+  let title, body;
+  if (sdnnDiff > 5 && rmssdDiff > 5) {
+    title = 'Wyraźna poprawa po ćwiczeniu.';
+    body = `SDNN wzrosło o ${sdnnDiff} ms, RMSSD o ${rmssdDiff} ms. Ćwiczenie regulacyjne realnie aktywowało nerw błędny i uspokojło układ nerwowy.`;
+  } else if (sdnnDiff > 0 || rmssdDiff > 0) {
+    title = 'Subtelna poprawa.';
+    body = `Widoczna pozytywna zmiana w HRV. Regularne powtarzanie ćwiczeń pogłębi efekt i skróci czas potrzebny do regulacji.`;
+  } else {
+    title = 'Bez wyraźnej zmiany.';
+    body = `Wyniki zbliżone. Może to oznaczać że ciało potrzebuje więcej czasu regeneracji, lub ćwiczenie wymagało większej intensywności. Wróć za godzinę.`;
+  }
+  document.getElementById('pp-title').textContent = title;
+  document.getElementById('pp-body').textContent  = body;
+}
+
+function resetCompare() {
+  ppBeforeData = null; ppAfterData = null;
+  showPPState('before');
+}
+
+// ══════════════════════════════════════════════
+// HISTORIA I WYKRESY
+// ══════════════════════════════════════════════
+let chartMetric = 'sdnn';
+
+function switchChartMetric(key, btn) {
+  chartMetric = key;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory();
+}
+
+function renderHistory() {
+  const hist = getHistory();
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  if (hist.length === 0) {
+    list.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:14px;padding:20px;">Brak pomiarów. Wykonaj pierwszy pomiar!</p>';
+    drawChart([]);
+    return;
+  }
+
+  // Wykres
+  const chartData = hist.slice(0,30).reverse().map(e => ({
+    date: new Date(e.date),
+    val: e.metrics?.[chartMetric] ?? null,
+  })).filter(d => d.val !== null);
+  drawChart(chartData);
+
+  // Lista
+  hist.slice(0, 20).forEach(entry => {
+    const m = entry.metrics;
+    if (!m) return;
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'}) + ' ' +
+                    d.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+    const cls = classifyMetric('sdnn', m.sdnn);
+    const colors = { hi:'#276749', avg:'#c47a15', low:'#9b2335' };
+    const typeLabel = { morning:'☀️', exercise:'🏃', before:'⬇️', after:'⬆️' };
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    div.innerHTML = `
+      <div class="hi-date">${typeLabel[entry.type]||'📍'} ${dateStr}</div>
+      <div class="hi-metrics">
+        ${['sdnn','rmssd','hr'].map(k=>`
+          <div class="hi-metric">
+            <div class="hi-val">${m[k]}</div>
+            <div class="hi-lbl">${NORMS[k].name}</div>
+          </div>`).join('')}
+      </div>
+      <div class="hi-badge" style="background:${colors[cls]||'#ccc'};"></div>`;
+    div.onclick = () => showResults(entry);
+    list.appendChild(div);
+  });
+}
+
+function drawChart(data) {
+  const wrap = document.getElementById('chart-canvas-wrap');
+  const cv   = document.getElementById('chart-canvas');
+  cv.width   = wrap.offsetWidth - 32;
+  cv.height  = 140;
+  const ctx  = cv.getContext('2d');
+  const w = cv.width, h = cv.height;
+  ctx.clearRect(0, 0, w, h);
+
+  if (data.length < 2) {
+    ctx.fillStyle = '#9a9690';
+    ctx.font = '13px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('Za mało danych do wykresu', w/2, h/2);
+    return;
+  }
+
+  const vals = data.map(d=>d.val);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+  const pad = { t:16, b:28, l:40, r:10 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+
+  // Linie pomocnicze
+  ctx.strokeStyle = '#e8e4de'; ctx.lineWidth = 1;
+  [0,.5,1].forEach(f => {
+    const y = pad.t + ch * (1-f);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w-pad.r, y); ctx.stroke();
+    ctx.fillStyle = '#9a9690'; ctx.font = '10px DM Sans'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(minV + range*f), pad.l-4, y+4);
+  });
+
+  // Gradient pod linią
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t+ch);
+  grad.addColorStop(0, 'rgba(26,107,90,.18)');
+  grad.addColorStop(1, 'rgba(26,107,90,.01)');
+
+  // Obszar
+  ctx.beginPath();
+  data.forEach((d, i) => {
+    const x = pad.l + (i/(data.length-1))*cw;
+    const y = pad.t + ch * (1-(d.val-minV)/range);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  const lastX = pad.l + cw, lastY = pad.t + ch;
+  ctx.lineTo(lastX, lastY); ctx.lineTo(pad.l, lastY);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+  // Linia
+  ctx.beginPath(); ctx.strokeStyle = '#1a6b5a'; ctx.lineWidth = 2;
+  data.forEach((d, i) => {
+    const x = pad.l + (i/(data.length-1))*cw;
+    const y = pad.t + ch * (1-(d.val-minV)/range);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Punkty
+  data.forEach((d, i) => {
+    const x = pad.l + (i/(data.length-1))*cw;
+    const y = pad.t + ch * (1-(d.val-minV)/range);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle = '#1a6b5a'; ctx.fill();
+  });
+
+  // Etykieta metryki
+  ctx.fillStyle = '#1a6b5a'; ctx.font = '11px DM Sans'; ctx.textAlign = 'left';
+  ctx.fillText(NORMS[chartMetric]?.name + ' (' + NORMS[chartMetric]?.unit + ')', pad.l, pad.t-4);
+}
+
+// ══════════════════════════════════════════════
+// HOME SCREEN
+// ══════════════════════════════════════════════
+function renderHome() {
+  const hist = getHistory();
+  const sub = document.getElementById('home-subtitle');
+  const statsWrap = document.getElementById('home-stats');
+  const lastCard = document.getElementById('last-measure-card');
+
+  if (hist.length === 0) {
+    sub.style.display = 'block';
+    statsWrap.style.display = 'none';
+    lastCard.style.display = 'none';
+    return;
+  }
+
+  sub.style.display = 'none';
+
+  // Ostatni pomiar
+  const last = hist[0];
+  const m = last?.metrics;
+  if (m) {
+    lastCard.style.display = 'block';
+    const d = new Date(last.date);
+    document.getElementById('last-measure-content').innerHTML = `
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+        ${d.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'})}
+        ${d.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})}
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        ${['sdnn','rmssd','hr','cv'].map(k=>{
+          const cls=classifyMetric(k,m[k]);
+          const bc=badgeClass(k,cls);
+          return `<div class="hi-metric">
+            <div class="hi-val">${m[k]}</div>
+            <div class="hi-lbl">${NORMS[k].name} ${NORMS[k].unit}</div>
+            <span class="card-badge ${bc}" style="font-size:9px;">${CLASS_PL[k][cls]}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // Statystyki 7-dniowe
+  const week = hist.filter(e => {
+    const d = new Date(e.date);
+    return (Date.now() - d.getTime()) < 7*24*3600*1000;
+  });
+  if (week.length >= 2) {
+    statsWrap.style.display = 'grid';
+    const avgSDNN  = Math.round(week.reduce((a,e)=>a+(e.metrics?.sdnn||0),0)/week.length);
+    const avgRMSSD = Math.round(week.reduce((a,e)=>a+(e.metrics?.rmssd||0),0)/week.length);
+    const trend = hist.length >= 4 ? (hist[0].metrics?.sdnn - hist[3].metrics?.sdnn) : 0;
+    const trendStr = trend > 2 ? '↑ w górę' : trend < -2 ? '↓ w dół' : '→ stabilny';
+    const trendColor = trend > 2 ? 'var(--green)' : trend < -2 ? 'var(--red)' : 'var(--muted)';
+    statsWrap.innerHTML = `
+      <div class="hs-card"><div class="hs-val">${week.length}</div><div class="hs-lbl">Pomiarów (7 dni)</div></div>
+      <div class="hs-card"><div class="hs-val">${avgSDNN}</div><div class="hs-lbl">Śr. SDNN ms</div><div class="hs-trend" style="color:${trendColor}">${trendStr}</div></div>
+      <div class="hs-card"><div class="hs-val">${avgRMSSD}</div><div class="hs-lbl">Śr. RMSSD ms</div></div>
+      <div class="hs-card"><div class="hs-val">${hist.length}</div><div class="hs-lbl">Wszystkich</div></div>`;
+  } else {
+    statsWrap.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════
+// FORMULARZ WYNIKI
+// ══════════════════════════════════════════════
+function fillResultForm() {
+  const e = currentResult;
+  if (!e) return;
+  const m = e.metrics;
+  const d = new Date(e.date);
+  document.getElementById('rf-date').value  = d.toLocaleString('pl-PL');
+  document.getElementById('rf-hr').value    = m.hr + ' bpm';
+  document.getElementById('rf-sdnn').value  = m.sdnn + ' ms';
+  document.getElementById('rf-rmssd').value = m.rmssd + ' ms';
+  document.getElementById('rf-pnn50').value = m.pnn50 + '%';
+  document.getElementById('rf-rr').value    = m.meanRR + ' ms';
+  document.getElementById('rf-cv').value    = m.cv;
+  document.getElementById('rf-mxdmn').value = m.mxdmn + ' s';
+  document.getElementById('rf-amo50').value = m.amo50 + '%';
+  document.getElementById('rf-type').value  = e.type;
+}
+
+function exportHistory() {
+  const hist = getHistory();
+  if (hist.length === 0) { alert('Brak pomiarów do wysłania.'); return; }
+  const rows = hist.map(e => {
+    const m = e.metrics;
+    const d = new Date(e.date).toLocaleString('pl-PL');
+    return `${d} | ${e.type} | HR:${m.hr} SDNN:${m.sdnn} RMSSD:${m.rmssd} pNN50:${m.pnn50}% CV:${m.cv}`;
+  }).join('\n');
+  const subject = encodeURIComponent('Historia HRV – Fizjomania');
+  const body    = encodeURIComponent('Historia pomiarów HRV:\n\n' + rows);
+  window.open(`mailto:?subject=${subject}&body=${body}`);
+}
+
+function clearHistory() {
+  if (confirm('Usunąć wszystkie pomiary?')) {
+    localStorage.removeItem('fizjo_hrv_history');
+    renderHistory(); renderHome();
+  }
+}
+
+// ══════════════════════════════════════════════
+// USTAWIENIA
+// ══════════════════════════════════════════════
+function renderSettings() {
+  const s = getSettings();
+  const toggle = document.getElementById('remind-toggle');
+  const timeInput = document.getElementById('remind-time');
+  toggle.classList.toggle('on', !!s.reminderOn);
+  if (s.reminderTime) timeInput.value = s.reminderTime;
+  document.getElementById('settings-count').textContent = getHistory().length;
+}
+
+function toggleReminder() {
+  const s = getSettings();
+  s.reminderOn = !s.reminderOn;
+  saveSettings(s);
+  const toggle = document.getElementById('remind-toggle');
+  toggle.classList.toggle('on', s.reminderOn);
+  if (s.reminderOn && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function saveReminderTime() {
+  const s = getSettings();
+  s.reminderTime = document.getElementById('remind-time').value;
+  saveSettings(s);
+}
+
+function closeBanner() {
+  document.getElementById('reminder-banner').classList.remove('show');
+  const s = getSettings();
+  s.lastBannerDate = new Date().toDateString();
+  saveSettings(s);
+}
+
+function checkReminder() {
+  const s = getSettings();
+  if (!s.reminderOn) return;
+  const now = new Date();
+  const todayStr = now.toDateString();
+  if (s.lastBannerDate === todayStr) return;
+
+  // Sprawdź czy jesteśmy w oknie ±30 min od ustawionej godziny
+  const [rh, rm] = (s.reminderTime || '07:00').split(':').map(Number);
+  const reminderMinutes = rh * 60 + rm;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  if (Math.abs(nowMinutes - reminderMinutes) <= 30) {
+    // Sprawdź czy dziś już mierzono
+    const hist = getHistory();
+    const todayMeasured = hist.some(e => new Date(e.date).toDateString() === todayStr);
+    if (!todayMeasured) {
+      document.getElementById('reminder-banner').classList.add('show');
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (currentScreen === 's-history') renderHistory();
+  if (currentScreen === 's-measure') resizePPGCanvas();
+});
+
+// Zatrzymaj kamerę gdy wychodzi z ekranu pomiaru
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (currentScreen === 's-measure') { stopCamera(); clearInterval(measureInterval); }
+  });
+});
+
+renderHome();
+checkReminder();
+resizePPGCanvas();
+</script>
+</body>
+</html>
