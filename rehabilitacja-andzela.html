@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ćwiczenia Andżeli — fizjomania-jaroslaw.pl</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Nunito:wght@300;400;600;700&family=Playfair+Display:ital,wght@1,400&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   GLOBAL
+══════════════════════════════════════ */
+:root {
+  --bg: #f5f0e8;
+  --surface: #fffdf8;
+  --accent: #2d6a4f;
+  --accent-light: #52b788;
+  --accent-pale: #d8f3dc;
+  --warn: #e07a5f;
+  --warn-pale: #fde8e4;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --border: #e5ddd0;
+  --shadow: rgba(45,106,79,0.12);
+  /* korteks palette */
+  --cream: #FDF6EE;
+  --peach: #F2C4A0;
+  --peach-deep: #E8A87C;
+  --sage: #9DB89A;
+  --sage-light: #C8DDC6;
+  --warm-brown: #7A5C4A;
+  --ktext: #3D2B1F;
+  --ktext-light: #8A7060;
+  --kwhite: #FFFDF9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ══════════════════════════════════════
+   PAGE SYSTEM
+══════════════════════════════════════ */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ══════════════════════════════════════
+   TOP HEADER (rehab pages)
+══════════════════════════════════════ */
+.top-header {
+  background: var(--accent);
+  color: white;
+  padding: 18px 20px 14px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.top-header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.15rem;
+}
+.top-header p { font-size: 0.74rem; opacity: 0.72; margin-top: 1px; }
+.header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+.site-badge {
+  font-size: 0.68rem; background: rgba(255,255,255,0.15);
+  border-radius: 20px; padding: 3px 10px; opacity: 0.9;
+}
+
+/* ══════════════════════════════════════
+   FATIGUE BAR
+══════════════════════════════════════ */
+.fatigue-bar {
+  background: var(--warn-pale); border-bottom: 2px solid var(--warn);
+  padding: 9px 18px; display: flex; align-items: center; gap: 10px;
+  font-size: 0.8rem; color: var(--warn); font-weight: 500;
+}
+.fatigue-bar.hidden { display: none; }
+
+/* ══════════════════════════════════════
+   MAIN
+══════════════════════════════════════ */
+main { max-width: 680px; margin: 0 auto; padding: 18px 16px 90px; }
+
+/* ══════════════════════════════════════
+   PATIENT TITLE BLOCK
+══════════════════════════════════════ */
+.patient-title {
+  background: var(--surface);
+  border-radius: 18px;
+  border: 1.5px solid var(--accent-pale);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.patient-avatar {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--accent-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; flex-shrink: 0;
+}
+.patient-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.35rem; color: var(--accent);
+}
+.patient-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ══════════════════════════════════════
+   SESSION STATS
+══════════════════════════════════════ */
+.session-info {
+  background: var(--surface); border-radius: 14px;
+  padding: 14px 18px; margin-bottom: 18px;
+  border: 1px solid var(--border);
+  display: flex; gap: 14px; align-items: center;
+}
+.session-stat { flex: 1; text-align: center; }
+.session-stat .num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.9rem; color: var(--accent); line-height: 1;
+}
+.session-stat .label { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.divider-v { width: 1px; height: 36px; background: var(--border); }
+
+/* ══════════════════════════════════════
+   SECTION LABEL
+══════════════════════════════════════ */
+.section-label {
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted); margin: 22px 0 9px;
+}
+
+/* ══════════════════════════════════════
+   EXERCISE CARD
+══════════════════════════════════════ */
+.exercise-card {
+  background: var(--surface);
+  border-radius: 16px; border: 1.5px solid var(--border);
+  margin-bottom: 11px; overflow: hidden; transition: box-shadow 0.2s;
+}
+.exercise-card.active-card { border-color: var(--accent-light); box-shadow: 0 4px 20px var(--shadow); }
+.exercise-card.done-card { opacity: 0.55; }
+
+.card-header {
+  display: flex; align-items: center;
+  padding: 13px 15px; gap: 11px; cursor: pointer; user-select: none;
+}
+.card-num {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent-pale); color: var(--accent);
+  font-weight: 500; font-size: 0.82rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.3s;
+}
+.done-card .card-num { background: var(--accent); color: white; }
+.card-num.active-num { background: var(--accent); color: white; animation: pulse-num 2s infinite; }
+@keyframes pulse-num {
+  0%,100% { box-shadow: 0 0 0 0 rgba(45,106,79,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(45,106,79,0); }
+}
+.card-title-wrap { flex: 1; }
+.card-title { font-family: 'DM Serif Display', serif; font-size: 0.98rem; line-height: 1.2; }
+.card-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.card-chevron { font-size: 0.78rem; color: var(--text-muted); transition: transform 0.2s; }
+.card-chevron.open { transform: rotate(180deg); }
+
+.card-body {
+  display: none; padding: 0 16px 16px;
+  border-top: 1px solid var(--border); animation: fadeIn 0.2s ease;
+}
+.card-body.open { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.instruction { font-size: 0.86rem; color: #374151; line-height: 1.75; padding: 11px 0 4px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 9px 0; }
+.tag {
+  font-size: 0.68rem; padding: 3px 9px; border-radius: 20px;
+  background: var(--accent-pale); color: var(--accent); font-weight: 500;
+}
+.tag.orange { background: #fef3c7; color: #92400e; }
+.tag.blue { background: #dbeafe; color: #1e40af; }
+
+/* ══════════════════════════════════════
+   TIMER
+══════════════════════════════════════ */
+.timer-section {
+  margin-top: 11px; background: var(--bg);
+  border-radius: 12px; padding: 13px; text-align: center;
+}
+.timer-display {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.8rem; color: var(--accent); line-height: 1; letter-spacing: 0.02em;
+}
+.timer-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; }
+.timer-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 11px; }
+
+.btn {
+  border: none; border-radius: 10px; padding: 9px 18px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+  font-weight: 500; cursor: pointer; transition: all 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #245e44; }
+.btn-ghost { background: var(--border); color: var(--text-muted); }
+.btn-ghost:hover { background: #d9d0c3; }
+.btn-done {
+  background: var(--accent-pale); color: var(--accent);
+  border: 1.5px solid var(--accent-light);
+  width: 100%; margin-top: 10px; padding: 10px;
+}
+.btn-done:hover { background: var(--accent-light); color: white; }
+
+/* ══════════════════════════════════════
+   REPS COUNTER
+══════════════════════════════════════ */
+.reps-section { margin-top: 11px; text-align: center; }
+.reps-display { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: var(--accent); }
+.reps-label { font-size: 0.7rem; color: var(--text-muted); }
+.reps-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+.btn-circle {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  font-size: 1.2rem; cursor: pointer; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.btn-circle:active { transform: scale(0.93); }
+.btn-minus { background: var(--warn-pale); color: var(--warn); }
+.btn-plus { background: var(--accent-pale); color: var(--accent); }
+
+/* ══════════════════════════════════════
+   METRONOME
+══════════════════════════════════════ */
+.metronome-section {
+  margin-top: 11px; background: var(--bg);
+  border-radius: 12px; padding: 13px; text-align: center;
+}
+.metronome-bpm { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--accent); }
+.metronome-beat {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent-light); margin: 8px auto; transition: transform 0.1s, background 0.1s;
+}
+.metronome-beat.tick { transform: scale(1.6); background: var(--accent); }
+.metronome-controls { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+.bpm-adj {
+  background: var(--border); border: none; width: 32px; height: 32px;
+  border-radius: 8px; cursor: pointer; font-size: 1rem;
+  font-weight: 500; color: var(--text-muted); transition: all 0.15s;
+}
+.bpm-adj:active { transform: scale(0.93); }
+
+/* ══════════════════════════════════════
+   LASER — ENLARGED
+══════════════════════════════════════ */
+.laser-guide {
+  margin-top: 12px; background: #0f1a2e;
+  border-radius: 14px; padding: 18px; text-align: center; color: white;
+}
+.laser-label { font-size: 0.72rem; opacity: 0.55; margin-bottom: 12px; letter-spacing: 0.05em; }
+.laser-canvas-wrap {
+  position: relative; width: 100%; max-width: 420px;
+  height: 260px; margin: 0 auto;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; background: rgba(255,255,255,0.02);
+  overflow: hidden;
+}
+/* diagonal guide lines */
+.laser-canvas-wrap::before, .laser-canvas-wrap::after {
+  content: '';
+  position: absolute; background: rgba(255,255,255,0.04);
+  width: 1px; height: 140%;
+  top: -20%; transform-origin: center;
+}
+.laser-canvas-wrap::before { left: 80%; transform: rotate(45deg); }
+.laser-canvas-wrap::after { left: 20%; transform: rotate(45deg); }
+
+.laser-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 14px #ff3b30, 0 0 32px rgba(255,59,48,0.5), 0 0 60px rgba(255,59,48,0.2);
+  position: absolute; transform: translate(-50%, -50%);
+  transition: left 2.4s ease-in-out, top 2.4s ease-in-out;
+}
+.laser-corner-label {
+  position: absolute; font-size: 0.62rem; opacity: 0.35;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em;
+}
+.laser-corner-label.tr { top: 8px; right: 10px; }
+.laser-corner-label.bl { bottom: 8px; left: 10px; }
+.laser-direction {
+  font-size: 0.8rem; opacity: 0.7; margin-top: 10px;
+  min-height: 20px; letter-spacing: 0.03em; transition: opacity 0.4s;
+}
+.laser-arrow {
+  font-size: 1.4rem; display: block; margin-bottom: 4px;
+}
+
+/* ══════════════════════════════════════
+   EYE GUIDE
+══════════════════════════════════════ */
+.eye-guide {
+  margin-top: 11px; background: var(--bg);
+  border-radius: 12px; padding: 13px; text-align: center;
+}
+.eye-prompt {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.25rem; color: var(--accent);
+  min-height: 34px; transition: all 0.3s;
+}
+.eye-progress { font-size: 0.73rem; color: var(--text-muted); margin-top: 5px; }
+
+/* ══════════════════════════════════════
+   TANDEM TRACKER
+══════════════════════════════════════ */
+.stability-track { margin-top: 11px; background: var(--bg); border-radius: 12px; padding: 12px; }
+.stability-row {
+  display: flex; align-items: center; gap: 11px; margin-bottom: 9px;
+  padding: 10px; background: white; border-radius: 10px; border: 1px solid var(--border);
+}
+.stability-side { font-size: 0.78rem; font-weight: 500; width: 74px; flex-shrink: 0; }
+.stability-timer-val {
+  font-family: 'DM Serif Display', serif; font-size: 1.45rem;
+  color: var(--accent); flex: 1; text-align: center;
+}
+.stability-timer-val.poor { color: var(--warn); }
+.stability-note { font-size: 0.66rem; color: var(--text-muted); }
+
+/* ══════════════════════════════════════
+   NOTES
+══════════════════════════════════════ */
+.notes-area { margin-top: 11px; }
+.notes-area textarea {
+  width: 100%; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+  resize: none; background: var(--surface); color: var(--text);
+  outline: none; transition: border-color 0.2s;
+}
+.notes-area textarea:focus { border-color: var(--accent-light); }
+
+/* ══════════════════════════════════════
+   REPORT FORM
+══════════════════════════════════════ */
+.report-section {
+  background: var(--surface); border-radius: 16px;
+  border: 1.5px solid var(--border); padding: 20px;
+  margin-top: 20px;
+}
+.report-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem; color: var(--accent); margin-bottom: 4px;
+}
+.report-sub { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; }
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; display: block; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 0.84rem;
+  background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-light); }
+.form-textarea { resize: none; }
+.feel-row { display: flex; gap: 8px; margin-top: 4px; }
+.feel-btn {
+  flex: 1; padding: 8px 4px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-size: 1.1rem; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.feel-btn.selected { border-color: var(--accent-light); background: var(--accent-pale); }
+.btn-send {
+  width: 100%; padding: 13px; margin-top: 6px;
+  background: var(--accent); color: white; border: none; border-radius: 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+  font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+.btn-send:hover { background: #245e44; }
+.send-success {
+  display: none; text-align: center; padding: 12px;
+  background: var(--accent-pale); border-radius: 12px;
+  color: var(--accent); font-size: 0.84rem; font-weight: 500;
+}
+
+/* ══════════════════════════════════════
+   FAB
+══════════════════════════════════════ */
+.fab {
+  position: fixed; bottom: 18px; right: 16px;
+  background: var(--accent); color: white; border: none;
+  border-radius: 16px; padding: 13px 22px;
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+  font-size: 0.85rem; cursor: pointer;
+  box-shadow: 0 4px 20px var(--shadow); transition: all 0.2s;
+  display: flex; align-items: center; gap: 7px; z-index: 50;
+}
+.fab:hover { background: #245e44; transform: translateY(-2px); }
+
+/* ══════════════════════════════════════
+   DONE OVERLAY
+══════════════════════════════════════ */
+.done-session {
+  display: none; position: fixed; inset: 0;
+  background: rgba(245,240,232,0.97); z-index: 200;
+  flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 30px; animation: fadeIn 0.4s;
+}
+.done-session.show { display: flex; }
+.done-icon { font-size: 2.8rem; margin-bottom: 10px; }
+.done-title { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--accent); margin-bottom: 7px; }
+.done-sub { color: var(--text-muted); font-size: 0.88rem; max-width: 320px; }
+.done-fatigue {
+  margin-top: 14px; background: var(--warn-pale); border: 1.5px solid var(--warn);
+  border-radius: 12px; padding: 12px 18px; color: var(--warn);
+  font-size: 0.82rem; max-width: 320px;
+}
+
+/* ══════════════════════════════════════
+   FOOTER
+══════════════════════════════════════ */
+.site-footer {
+  text-align: center; padding: 14px; font-size: 0.75rem;
+  color: var(--text-muted); margin-top: 10px;
+}
+.site-footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+/* ══════════════════════════════════════
+   ════ KORTEKS RESET STYLES ════
+══════════════════════════════════════ */
+#page-korteks {
+  font-family: 'Nunito', sans-serif;
+  background: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.k-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.k-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(60px); opacity: 0.35;
+  animation: k-drift 12s ease-in-out infinite alternate;
+}
+.k-blob-1 { width: 400px; height: 400px; background: var(--peach); top: -100px; left: -100px; }
+.k-blob-2 { width: 300px; height: 300px; background: var(--sage-light); bottom: -80px; right: -60px; animation-delay: -4s; }
+.k-blob-3 { width: 250px; height: 250px; background: #F7D9C4; top: 50%; left: 60%; animation-delay: -8s; }
+@keyframes k-drift {
+  from { transform: translate(0,0) scale(1); }
+  to { transform: translate(30px,20px) scale(1.08); }
+}
+.k-app {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 440px;
+  margin: 0 auto; padding: 24px 16px;
+}
+.k-screen { display: none; animation: k-fadeUp 0.6s ease both; }
+.k-screen.active { display: block; }
+@keyframes k-fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.k-card {
+  background: var(--kwhite); border-radius: 32px;
+  padding: 36px 32px; box-shadow: 0 8px 40px rgba(122,92,74,0.12);
+}
+.k-tag {
+  display: inline-block; background: var(--sage-light); color: var(--warm-brown);
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 6px 14px; border-radius: 20px; margin-bottom: 18px;
+}
+.k-h1 {
+  font-family: 'Playfair Display', serif; font-size: 28px; font-style: italic;
+  color: var(--warm-brown); line-height: 1.2; margin-bottom: 10px;
+}
+.k-subtitle { color: var(--ktext-light); font-size: 14px; line-height: 1.65; margin-bottom: 10px; }
+.k-note {
+  background: #FFF7F0; border-left: 3px solid var(--peach-deep);
+  border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; color: var(--ktext-light); line-height: 1.6; margin-bottom: 24px;
+}
+.k-note strong { color: var(--warm-brown); }
+.k-duration-row {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--ktext-light); font-size: 13px; margin-bottom: 28px;
+}
+.k-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--peach-deep); }
+.k-btn-primary {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--peach-deep), #D4835A);
+  border: none; border-radius: 20px; color: white;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 6px 20px rgba(232,168,124,0.45); letter-spacing: 0.3px;
+}
+.k-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(232,168,124,0.5); }
+.k-btn-secondary {
+  width: 100%; padding: 14px; background: transparent;
+  border: 2px solid var(--peach-deep); border-radius: 20px; color: var(--peach-deep);
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; margin-top: 10px; transition: all 0.2s;
+}
+.k-btn-secondary:hover { background: var(--peach-deep); color: white; }
+/* progress */
+.k-progress-wrap { display: flex; gap: 6px; margin-bottom: 24px; }
+.k-pip {
+  flex: 1; height: 5px; border-radius: 10px; background: #EDE5DC; transition: background 0.4s;
+}
+.k-pip.done { background: var(--sage); }
+.k-pip.current { background: var(--peach-deep); }
+/* exercise */
+.k-ex-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--ktext-light); margin-bottom: 6px;
+}
+.k-ex-title {
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: 22px; color: var(--warm-brown); margin-bottom: 16px; line-height: 1.25;
+}
+.k-anim-zone {
+  width: 180px; height: 180px; margin: 0 auto 20px;
+  position: relative; display: flex; align-items: center; justify-content: center;
+}
+.k-ring {
+  position: absolute; border-radius: 50%;
+  border: 3px solid var(--peach); animation: k-ringPulse 2s ease-in-out infinite;
+}
+.k-ring-1 { width: 180px; height: 180px; }
+.k-ring-2 { width: 140px; height: 140px; animation-delay: 0.4s; border-color: var(--sage-light); }
+@keyframes k-ringPulse {
+  0%,100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+.k-hand-icon {
+  font-size: 58px; z-index: 2;
+  animation: k-gentleFloat 3s ease-in-out infinite; user-select: none;
+}
+@keyframes k-gentleFloat {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.k-finger-track { display: flex; justify-content: center; gap: 10px; margin-bottom: 18px; }
+.k-finger-dot {
+  width: 34px; height: 34px; border-radius: 50%; background: #EDE5DC;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--ktext-light); transition: all 0.3s;
+}
+.k-finger-dot.active {
+  background: var(--peach-deep); color: white;
+  transform: scale(1.2); box-shadow: 0 4px 14px rgba(232,168,124,0.5);
+}
+.k-finger-dot.done { background: var(--sage); color: white; }
+.k-instruction-box {
+  background: linear-gradient(135deg, #FFF7F0, #F5EDE4); border-radius: 18px;
+  padding: 18px; margin-bottom: 18px; border-left: 4px solid var(--peach-deep);
+}
+.k-instruction-box p { font-size: 13px; line-height: 1.75; color: var(--ktext); }
+.k-instruction-step { font-size: 16px; font-weight: 700; color: var(--warm-brown); margin-bottom: 5px; }
+/* timer ring */
+.k-timer-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+.k-timer-svg { transform: rotate(-90deg); }
+.k-timer-bg { fill: none; stroke: #EDE5DC; stroke-width: 6; }
+.k-timer-fg {
+  fill: none; stroke: var(--peach-deep); stroke-width: 6;
+  stroke-linecap: round; stroke-dasharray: 213.6; stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+.k-timer-num {
+  position: absolute; font-size: 26px; font-weight: 700; color: var(--warm-brown);
+}
+.k-timer-container { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+/* breath screen */
+.k-breath-circle {
+  width: 130px; height: 130px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #F5EDE4, var(--peach));
+  margin: 0 auto 18px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 30px rgba(232,168,124,0.35); transition: transform 4s ease-in-out;
+}
+.k-breath-circle.expand { transform: scale(1.35); }
+.k-breath-circle.contract { transform: scale(1); }
+.k-breath-label { text-align: center; font-size: 20px; font-weight: 700; color: var(--warm-brown); margin-bottom: 6px; }
+.k-breath-sub { text-align: center; color: var(--ktext-light); font-size: 13px; margin-bottom: 24px; }
+/* complete */
+.k-celebrate { text-align: center; padding: 8px 0; }
+.k-celebrate-emoji {
+  font-size: 60px; display: block; margin-bottom: 14px;
+  animation: k-bounceIn 0.8s cubic-bezier(0.36,0.07,0.19,0.97) both;
+}
+@keyframes k-bounceIn {
+  0% { transform: scale(0) rotate(-10deg); }
+  60% { transform: scale(1.15) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.k-celebrate h2 {
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: 24px; color: var(--warm-brown); margin-bottom: 10px;
+}
+.k-celebrate p { color: var(--ktext-light); line-height: 1.6; font-size: 14px; margin-bottom: 24px; }
+.k-feeling-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
+.k-feel-btn {
+  width: 44px; height: 44px; border-radius: 50%; border: 2px solid #EDE5DC;
+  background: white; font-size: 18px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.k-feel-btn:hover, .k-feel-btn.selected { border-color: var(--sage); background: var(--sage-light); transform: scale(1.15); }
+.k-feeling-label { text-align: center; font-size: 12px; color: var(--ktext-light); margin-bottom: 18px; }
+.k-footer-link { text-align: center; margin-top: 20px; font-size: 13px; color: var(--ktext-light); }
+.k-footer-link a { color: var(--warm-brown); text-decoration: none; font-weight: 700; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PAGE 1: KORTEKS RESET
+══════════════════════════════════════ -->
+<div id="page-korteks" class="page active">
+  <div class="k-bg">
+    <div class="k-blob k-blob-1"></div>
+    <div class="k-blob k-blob-2"></div>
+    <div class="k-blob k-blob-3"></div>
+  </div>
+
+  <div class="k-app">
+
+    <!-- WELCOME -->
+    <div class="k-screen k-card active" id="k-screen-welcome">
+      <div class="k-tag">Przed sesją · 8–10 minut</div>
+      <h1 class="k-h1">Wróć do siebie</h1>
+      <p class="k-subtitle">Protokół wyciszenia kory mózgowej. Zacznij tutaj, zanim przejdziesz do ćwiczeń równowagi.</p>
+      <div class="k-note">
+        <strong>Dlaczego to ważne?</strong> Te ćwiczenia manualne pomagają wyciszyć nadmierną aktywność kory i przygotować układ nerwowy do pracy nad równowagą. Każda sesja zaczyna się tutaj.
+      </div>
+      <div class="k-duration-row">
+        <div class="k-dot"></div> ok. 8–10 minut
+        <div class="k-dot"></div> cisza lub spokojne miejsce
+      </div>
+      <button class="k-btn-primary" onclick="kStartProtocol()">Zaczynam ✦</button>
+      <div class="k-footer-link" style="margin-top:16px">
+        <a href="https://fizjomania-jaroslaw.pl" target="_blank">fizjomania-jaroslaw.pl</a>
+      </div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="k-screen k-card" id="k-screen-exercise">
+      <div class="k-progress-wrap" id="k-progress-bar"></div>
+      <div class="k-ex-label" id="k-ex-label">Ćwiczenie 1 z 5</div>
+      <div class="k-ex-title" id="k-ex-title"></div>
+      <div class="k-anim-zone">
+        <div class="k-ring k-ring-1"></div>
+        <div class="k-ring k-ring-2"></div>
+        <div class="k-hand-icon" id="k-hand-icon">🤲</div>
+      </div>
+      <div class="k-finger-track" id="k-finger-track"></div>
+      <div class="k-instruction-box">
+        <div class="k-instruction-step" id="k-step-label"></div>
+        <p id="k-instruction-text"></p>
+      </div>
+      <div class="k-timer-wrap">
+        <div class="k-timer-container">
+          <svg class="k-timer-svg" width="76" height="76">
+            <circle class="k-timer-bg" cx="38" cy="38" r="34"/>
+            <circle class="k-timer-fg" id="k-timer-circle" cx="38" cy="38" r="34"
+              stroke-dasharray="213.6" stroke-dashoffset="0"/>
+          </svg>
+          <span class="k-timer-num" id="k-timer-num">—</span>
+        </div>
+      </div>
+      <button class="k-btn-primary" id="k-btn-next" onclick="kNextStep()">Dalej →</button>
+    </div>
+
+    <!-- BREATH PAUSE -->
+    <div class="k-screen k-card" id="k-screen-breath">
+      <div class="k-tag">Pauza · Oddech</div>
+      <h1 class="k-h1" style="font-size:22px; margin-bottom:18px;">Oddechnij chwilę</h1>
+      <div class="k-breath-circle" id="k-breath-circle">
+        <span style="font-size:32px">🌿</span>
+      </div>
+      <div class="k-breath-label" id="k-breath-action">Wdech...</div>
+      <div class="k-breath-sub" id="k-breath-count">4 sekundy</div>
+      <button class="k-btn-primary" onclick="kSkipBreath()">Pomiń pauzę</button>
+    </div>
+
+    <!-- COMPLETE -->
+    <div class="k-screen k-card" id="k-screen-complete">
+      <div class="k-celebrate">
+        <span class="k-celebrate-emoji">🌸</span>
+        <h2>Protokół ukończony</h2>
+        <p>Twoja kora mózgowa dostała sygnał bezpieczeństwa. Zostań chwilę z tym spokojnym uczuciem.</p>
+        <div class="k-feeling-label">Jak się teraz czujesz?</div>
+        <div class="k-feeling-row">
+          <button class="k-feel-btn" onclick="kSelectFeel(this)">😞</button>
+          <button class="k-feel-btn" onclick="kSelectFeel(this)">😕</button>
+          <button class="k-feel-btn" onclick="kSelectFeel(this)">😐</button>
+          <button class="k-feel-btn" onclick="kSelectFeel(this)">🙂</button>
+          <button class="k-feel-btn" onclick="kSelectFeel(this)">😌</button>
+        </div>
+        <button class="k-btn-primary" onclick="goToRehab()">Przejdź do ćwiczeń równowagi →</button>
+        <button class="k-btn-secondary" onclick="kRestartProtocol()">Powtórz protokół</button>
+        <div class="k-footer-link">
+          <a href="https://fizjomania-jaroslaw.pl" target="_blank">fizjomania-jaroslaw.pl</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 2: REHABILITACJA
+══════════════════════════════════════ -->
+<div id="page-rehab" class="page">
+
+  <div class="top-header">
+    <div class="header-row">
+      <div>
+        <h1>Ćwiczenia Andżeli</h1>
+        <p>Równowaga i koordynacja wzrokowo-przedsionkowa</p>
+      </div>
+      <span class="site-badge">fizjomania-jaroslaw.pl</span>
+    </div>
+  </div>
+
+  <div class="fatigue-bar hidden" id="fatigueBar">
+    ⚠️ &nbsp;Pamiętaj — zatrzymaj jeśli czujesz zmęczenie lub zawroty. Odpoczynek jest częścią terapii.
+  </div>
+
+  <main>
+
+    <!-- PATIENT TITLE -->
+    <div class="patient-title">
+      <div class="patient-avatar">🌿</div>
+      <div>
+        <div class="patient-name">Andżela</div>
+        <div class="patient-sub">Program rehabilitacji równowagi · 31 lat</div>
+      </div>
+    </div>
+
+    <!-- SESSION STATS -->
+    <div class="session-info">
+      <div class="session-stat">
+        <div class="num" id="doneCount">0</div>
+        <div class="label">wykonane</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="session-stat">
+        <div class="num">5</div>
+        <div class="label">łącznie</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="session-stat">
+        <div class="num" id="sessionTime">0'</div>
+        <div class="label">czas sesji</div>
+      </div>
+    </div>
+
+    <!-- ═══ ĆWICZENIA ═══ -->
+    <div class="section-label">Równowaga statyczna</div>
+
+    <!-- 1. ROMBERG -->
+    <div class="exercise-card" id="card-1">
+      <div class="card-header" onclick="toggleCard(1)">
+        <div class="card-num" id="num-1">1</div>
+        <div class="card-title-wrap">
+          <div class="card-title">Romberg</div>
+          <div class="card-meta">Stanie z nogami razem • oczy otwarte → zamknięte</div>
+        </div>
+        <span class="card-chevron" id="chev-1">▼</span>
+      </div>
+      <div class="card-body" id="body-1">
+        <div class="tags">
+          <span class="tag">Równowaga</span>
+          <span class="tag orange">Wychylenie w prawo — strona słabsza</span>
+        </div>
+        <div class="instruction">
+          Stań z nogami złączonymi, ręce wzdłuż ciała.<br>
+          <strong>Seria 1:</strong> Oczy otwarte, patrz na stały punkt — 30 sek.<br>
+          <strong>Seria 2:</strong> Oczy zamknięte — tyle ile możesz, do 30 sek.<br>
+          <strong>Seria 3:</strong> Głowa lekko uniesiona, patrz w górę — 20 sek.<br><br>
+          🔍 <em>Obserwuj wychylenie w prawo — koncentruj się na powrocie do środka.</em>
+        </div>
+        <div class="timer-section">
+          <div class="timer-display" id="timer-1">30</div>
+          <div class="timer-label">sekundy</div>
+          <div class="timer-buttons">
+            <button class="btn btn-ghost" onclick="resetTimer(1,30)">Reset</button>
+            <button class="btn btn-primary" id="timerBtn-1" onclick="toggleTimer(1,30)">▶ Start</button>
+          </div>
+        </div>
+        <div class="notes-area" style="margin-top:10px">
+          <textarea id="note-1" rows="2" placeholder="Ile sekund? Jak się czułaś?"></textarea>
+        </div>
+        <button class="btn btn-done" onclick="markDone(1)">✓ Wykonane</button>
+      </div>
+    </div>
+
+    <!-- 2. TANDEM -->
+    <div class="exercise-card" id="card-2">
+      <div class="card-header" onclick="toggleCard(2)">
+        <div class="card-num" id="num-2">2</div>
+        <div class="card-title-wrap">
+          <div class="card-title">Tandem — stanie</div>
+          <div class="card-meta">Stopa za stopą • mierz czas obu stron</div>
+        </div>
+        <span class="card-chevron" id="chev-2">▼</span>
+      </div>
+      <div class="card-body" id="body-2">
+        <div class="tags">
+          <span class="tag">Tandem</span>
+          <span class="tag blue">Lewa z przodu — lepsza strona</span>
+          <span class="tag orange">Prawa z przodu — wzmocnienie</span>
+        </div>
+        <div class="instruction">
+          Stań w pozycji tandem (stopa za stopą). Ręce wzdłuż ciała. Patrz na stały punkt.<br>
+          Docelowo: <strong>&gt;16 sek</strong> bez korekty. Porównaj obie strony.
+        </div>
+        <div class="stability-track">
+          <div class="stability-row">
+            <div>
+              <div class="stability-side">🦵 Lewa z przodu</div>
+              <div class="stability-note">Twoja lepsza strona</div>
+            </div>
+            <div class="stability-timer-val" id="tandemLeft">0s</div>
+            <div>
+              <button class="btn btn-primary" id="tandemBtn-L" onclick="toggleTandem('L')" style="font-size:0.74rem;padding:6px 12px">▶ Start</button>
+            </div>
+          </div>
+          <div class="stability-row">
+            <div>
+              <div class="stability-side">🦵 Prawa z przodu</div>
+              <div class="stability-note">Strona do wzmocnienia</div>
+            </div>
+            <div class="stability-timer-val poor" id="tandemRight">0s</div>
+            <div>
+              <button class="btn btn-primary" id="tandemBtn-R" onclick="toggleTandem('R')" style="font-size:0.74rem;padding:6px 12px">▶ Start</button>
+            </div>
+          </div>
+        </div>
+        <div class="notes-area" style="margin-top:8px">
+          <textarea id="note-2" rows="2" placeholder="Czy było łatwiej niż poprzednio?"></textarea>
+        </div>
+        <button class="btn btn-done" onclick="markDone(2)">✓ Wykonane</button>
+      </div>
+    </div>
+
+    <!-- ═══ WZROKOWO-PRZEDSIONKOWE ═══ -->
+    <div class="section-label">Ćwiczenia wzrokowo-przedsionkowe</div>
+
+    <!-- 3. RUCH OCZU -->
+    <div class="exercise-card" id="card-3">
+      <div class="card-header" onclick="toggleCard(3)">
+        <div class="card-num" id="num-3">3</div>
+        <div class="card-title-wrap">
+          <div class="card-title">Ruch oczu — lewa strona</div>
+          <div class="card-meta">Oczy w lewo → zamknij → wróć • 10×</div>
+        </div>
+        <span class="card-chevron" id="chev-3">▼</span>
+      </div>
+      <div class="card-body" id="body-3">
+        <div class="tags">
+          <span class="tag">VOR</span><span class="tag">Adaptacja</span><span class="tag orange">10 powtórzeń</span>
+        </div>
+        <div class="instruction">
+          Głowa nieruchomo. Powoli przesuń wzrok maksymalnie w lewo → zamknij oczy → otwórz i wróć na wprost.<br>
+          Wolno, rytmicznie. Po 10 powtórzeniach spróbuj Tandem — powinien być lepszy!
+        </div>
+        <div class="eye-guide">
+          <div class="eye-prompt" id="eyePrompt">Naciśnij Start</div>
+          <div class="eye-progress" id="eyeProgress"></div>
+          <div class="timer-buttons" style="margin-top:10px">
+            <button class="btn btn-ghost" onclick="resetEye()">Reset</button>
+            <button class="btn btn-primary" id="eyeBtn" onclick="startEye()">▶ Start</button>
+          </div>
+        </div>
+        <div class="notes-area" style="margin-top:8px">
+          <textarea id="note-3" rows="2" placeholder="Jak czułaś się po tym ćwiczeniu?"></textarea>
+        </div>
+        <button class="btn btn-done" onclick="markDone(3)">✓ Wykonane</button>
+      </div>
+    </div>
+
+    <!-- 4. METRONOM -->
+    <div class="exercise-card" id="card-4">
+      <div class="card-header" onclick="toggleCard(4)">
+        <div class="card-num" id="num-4">4</div>
+        <div class="card-title-wrap">
+          <div class="card-title">Chód w miejscu z metronomem</div>
+          <div class="card-meta">40 BPM • śledzenie wzrokowe • 2 min</div>
+        </div>
+        <span class="card-chevron" id="chev-4">▼</span>
+      </div>
+      <div class="card-body" id="body-4">
+        <div class="tags">
+          <span class="tag">Rytm</span><span class="tag">VOR</span><span class="tag blue">Metronom 40 BPM</span>
+        </div>
+        <div class="instruction">
+          Maszeruj w miejscu w rytm metronomu (nisko unosząc stopy).<br>
+          Trzymaj długopis wyciągnięty przed sobą, patrz na czubek.<br>
+          Powoli przesuń w <strong>lewo</strong>, śledząc wzrokiem → zamknij oczy → wróć.
+        </div>
+        <div class="metronome-section">
+          <div class="metronome-bpm" id="metroBpm">40 BPM</div>
+          <div class="metronome-beat" id="metroBeat"></div>
+          <div class="metronome-controls">
+            <button class="bpm-adj" onclick="changeBpm(-5)">−</button>
+            <button class="btn btn-primary" id="metroBtn" onclick="toggleMetro()">▶ Start</button>
+            <button class="bpm-adj" onclick="changeBpm(+5)">+</button>
+          </div>
+        </div>
+        <div class="timer-section" style="margin-top:10px">
+          <div class="timer-display" id="timer-4">120</div>
+          <div class="timer-label">pozostałe sekundy</div>
+          <div class="timer-buttons">
+            <button class="btn btn-ghost" onclick="resetTimer(4,120)">Reset</button>
+            <button class="btn btn-primary" id="timerBtn-4" onclick="toggleTimer(4,120)">▶ Start</button>
+          </div>
+        </div>
+        <div class="notes-area" style="margin-top:8px">
+          <textarea id="note-4" rows="2" placeholder="Uwagi do ćwiczenia..."></textarea>
+        </div>
+        <button class="btn btn-done" onclick="markDone(4)">✓ Wykonane</button>
+      </div>
+    </div>
+
+    <!-- 5. LASER -->
+    <div class="exercise-card" id="card-5">
+      <div class="card-header" onclick="toggleCard(5)">
+        <div class="card-num" id="num-5">5</div>
+        <div class="card-title-wrap">
+          <div class="card-title">Śledzenie lasera</div>
+          <div class="card-meta">Prawa góra ↗ ↔ Lewy dół ↙ • 3 min</div>
+        </div>
+        <span class="card-chevron" id="chev-5">▼</span>
+      </div>
+      <div class="card-body" id="body-5">
+        <div class="tags">
+          <span class="tag">Laser</span><span class="tag">VOR</span><span class="tag orange">Tor asymetryczny</span>
+        </div>
+        <div class="instruction">
+          Głowa nieruchomo — poruszaj <strong>tylko oczami</strong> wzdłuż toru.<br>
+          Tor: <strong>prawa góra ↗ → lewy dół ↙ → prawa góra ↗</strong><br>
+          Tempo spokojne, płynne. Jeśli masz wskaźnik laserowy — poproś kogoś o pomoc.
+        </div>
+
+        <div class="laser-guide">
+          <div class="laser-label">WIRTUALNY TOR LASERA — śledź wzrokiem tylko oczami</div>
+          <div class="laser-canvas-wrap" id="laserWrap">
+            <span class="laser-corner-label tr">↗ PRAWA GÓRA</span>
+            <span class="laser-corner-label bl">↙ LEWY DÓŁ</span>
+            <div class="laser-dot" id="laserDot"></div>
+          </div>
+          <div class="laser-direction" id="laserDirection">
+            <span class="laser-arrow" id="laserArrow">—</span>
+            <span id="laserInfo">Naciśnij Start</span>
+          </div>
+          <div style="margin-top:12px">
+            <button class="btn btn-primary" id="laserBtn" onclick="toggleLaser()">▶ Start</button>
+          </div>
+        </div>
+
+        <div class="timer-section" style="margin-top:12px">
+          <div class="timer-display" id="timer-5">180</div>
+          <div class="timer-label">pozostałe sekundy</div>
+          <div class="timer-buttons">
+            <button class="btn btn-ghost" onclick="resetTimer(5,180)">Reset</button>
+            <button class="btn btn-primary" id="timerBtn-5" onclick="toggleTimer(5,180)">▶ Start</button>
+          </div>
+        </div>
+        <div class="notes-area" style="margin-top:8px">
+          <textarea id="note-5" rows="2" placeholder="Czy śledzenie było płynne?"></textarea>
+        </div>
+        <button class="btn btn-done" onclick="markDone(5)">✓ Wykonane</button>
+      </div>
+    </div>
+
+    <!-- 6. VOR -->
+    <div class="section-label">Stabilizacja wzroku (VOR) — do domu</div>
+
+    <div class="exercise-card" id="card-6">
+      <div class="card-header" onclick="toggleCard(6)">
+        <div class="card-num" id="num-6">6</div>
+        <div class="card-title-wrap">
+          <div class="card-title">VOR — Stabilizacja wzroku</div>
+          <div class="card-meta">Rotacje głowy przy fixacji • 2 serie po 20</div>
+        </div>
+        <span class="card-chevron" id="chev-6">▼</span>
+      </div>
+      <div class="card-body" id="body-6">
+        <div class="tags">
+          <span class="tag">VOR</span><span class="tag">Dom</span><span class="tag blue">2 × 20 powtórzeń</span>
+        </div>
+        <div class="instruction">
+          Utrwal wzrok na literze/punkcie na ścianie (ok. 2 m od siebie).<br>
+          <strong>Seria 1 — pozioma:</strong> Powoli obracaj głową w prawo i lewo — 20 razy.<br>
+          Punkt musi być cały czas ostry — jeśli się "ucieka" to za szybko.<br><br>
+          <strong>Seria 2 — pionowa:</strong> Rotacje góra-dół (kiwanie głową) — 20 razy.<br><br>
+          ⚡ <em>Zacznij bardzo wolno. Prędkość zwiększaj z tygodnia na tydzień.</em>
+        </div>
+
+        <!-- Seria 1 -->
+        <div style="margin-top:12px; background:var(--bg); border-radius:12px; padding:13px;">
+          <div style="font-size:0.78rem; font-weight:500; color:var(--text-muted); margin-bottom:8px;">Seria 1 — pozioma (lewo/prawo)</div>
+          <div class="reps-section" style="margin-top:0">
+            <div class="reps-display" id="reps-6a">0 / 20</div>
+            <div class="reps-label">powtórzenia</div>
+            <div class="reps-buttons">
+              <button class="btn-circle btn-minus" onclick="changeReps('6a',-1)">−</button>
+              <button class="btn-circle btn-plus" onclick="changeReps('6a',+1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seria 2 -->
+        <div style="margin-top:10px; background:var(--bg); border-radius:12px; padding:13px;">
+          <div style="font-size:0.78rem; font-weight:500; color:var(--text-muted); margin-bottom:8px;">Seria 2 — pionowa (góra/dół)</div>
+          <div class="reps-section" style="margin-top:0">
+            <div class="reps-display" id="reps-6b">0 / 20</div>
+            <div class="reps-label">powtórzenia</div>
+            <div class="reps-buttons">
+              <button class="btn-circle btn-minus" onclick="changeReps('6b',-1)">−</button>
+              <button class="btn-circle btn-plus" onclick="changeReps('6b',+1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="notes-area" style="margin-top:10px">
+          <textarea id="note-6" rows="2" placeholder="Czy miałaś zawroty? Jak było tempo?"></textarea>
+        </div>
+        <button class="btn btn-done" onclick="markDone(6)">✓ Wykonane</button>
+      </div>
+    </div>
+
+    <!-- ═══ FORMULARZ RAPORTU ═══ -->
+    <div class="report-section">
+      <div class="report-title">📬 Wyślij wyniki do terapeuty</div>
+      <div class="report-sub">Wypełnij po każdej sesji — wyniki trafią bezpośrednio do Twojej terapeutki.</div>
+
+      <div class="form-group">
+        <label class="form-label">Data sesji</label>
+        <input type="date" class="form-input" id="rDate">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tandem — lewa noga z przodu (sekundy)</label>
+        <input type="number" class="form-input" id="rTandemL" placeholder="np. 16">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tandem — prawa noga z przodu (sekundy)</label>
+        <input type="number" class="form-input" id="rTandemR" placeholder="np. 10">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Jak się czułaś podczas sesji?</label>
+        <div class="feel-row">
+          <button class="feel-btn" onclick="selectReportFeel(this,'😞')">😞</button>
+          <button class="feel-btn" onclick="selectReportFeel(this,'😕')">😕</button>
+          <button class="feel-btn" onclick="selectReportFeel(this,'😐')">😐</button>
+          <button class="feel-btn" onclick="selectReportFeel(this,'🙂')">🙂</button>
+          <button class="feel-btn" onclick="selectReportFeel(this,'😌')">😌</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Zmęczenie podczas sesji</label>
+        <select class="form-select" id="rFatigue">
+          <option value="">wybierz...</option>
+          <option>Brak zmęczenia</option>
+          <option>Lekkie zmęczenie pod koniec</option>
+          <option>Zmęczenie w trakcie — musiałam zrobić przerwę</option>
+          <option>Duże zmęczenie — skróciłam sesję</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Dodatkowe notatki / obserwacje</label>
+        <textarea class="form-textarea" id="rNotes" rows="3" placeholder="Np. co było trudniejsze niż poprzednio, co poprawiłaś, jak się czułaś po ćwiczeniach oczu..."></textarea>
+      </div>
+
+      <button class="btn-send" onclick="sendReport()">📤 Wyślij raport do terapeuty</button>
+      <div class="send-success" id="sendSuccess">
+        ✅ Raport wysłany! Twoja terapeutka otrzyma wyniki na maila.
+      </div>
+    </div>
+
+    <div class="site-footer">
+      <a href="https://fizjomania-jaroslaw.pl" target="_blank">fizjomania-jaroslaw.pl</a>
+    </div>
+
+  </main>
+
+  <button class="fab" onclick="finishSession()">🏁 Zakończ sesję</button>
+
+  <div class="done-session" id="doneSession">
+    <div class="done-icon">🌿</div>
+    <div class="done-title">Świetna robota, Andżelo!</div>
+    <div class="done-sub">Sesja ukończona. Twój mózg i układ przedsionkowy dostały właśnie dawkę dobrego bodźcowania.</div>
+    <div class="done-fatigue">
+      ⚠️ Jeśli czujesz zmęczenie — odpoczynek jest <strong>częścią terapii</strong>, nie słabością. Połóż się na chwilę.
+    </div>
+    <button class="btn btn-primary" style="margin-top:20px;padding:12px 32px" onclick="location.reload()">↺ Nowa sesja</button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════ -->
+<script>
+// ─── PAGE SYSTEM ───────────────────────────────
+function goToRehab() {
+  document.getElementById('page-korteks').classList.remove('active');
+  document.getElementById('page-rehab').classList.add('active');
+  document.body.style.overflow = 'auto';
+}
+
+// ─── REHAB: SESSION TIMER ──────────────────────
+let sessionStart = Date.now();
+setInterval(() => {
+  const mins = Math.floor((Date.now() - sessionStart) / 60000);
+  const el = document.getElementById('sessionTime');
+  if (el) el.textContent = mins + "'";
+}, 15000);
+
+// ─── REHAB: CARDS ──────────────────────────────
+function toggleCard(n) {
+  const body = document.getElementById('body-'+n);
+  const chev = document.getElementById('chev-'+n);
+  const card = document.getElementById('card-'+n);
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.card-chevron').forEach(c => c.classList.remove('open'));
+  document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('active-card'));
+  document.querySelectorAll('.card-num').forEach(c => c.classList.remove('active-num'));
+  if (!isOpen) {
+    body.classList.add('open');
+    chev.classList.add('open');
+    card.classList.add('active-card');
+    document.getElementById('num-'+n).classList.add('active-num');
+    document.getElementById('fatigueBar').classList.remove('hidden');
+  }
+}
+
+// ─── DONE ──────────────────────────────────────
+let doneSet = new Set();
+function markDone(n) {
+  doneSet.add(n);
+  const card = document.getElementById('card-'+n);
+  card.classList.add('done-card'); card.classList.remove('active-card');
+  document.getElementById('num-'+n).classList.remove('active-num');
+  document.getElementById('num-'+n).textContent = '✓';
+  document.getElementById('body-'+n).classList.remove('open');
+  document.getElementById('chev-'+n).classList.remove('open');
+  document.getElementById('doneCount').textContent = doneSet.size;
+}
+function finishSession() { document.getElementById('doneSession').classList.add('show'); }
+
+// ─── TIMER ─────────────────────────────────────
+let timers = {};
+function toggleTimer(id, max) {
+  if (timers[id] && timers[id].running) {
+    clearInterval(timers[id].interval);
+    timers[id].running = false;
+    document.getElementById('timerBtn-'+id).textContent = '▶ Start';
+  } else {
+    if (!timers[id]) timers[id] = { val: max };
+    timers[id].running = true;
+    timers[id].interval = setInterval(() => {
+      timers[id].val--;
+      const el = document.getElementById('timer-'+id);
+      if (el) el.textContent = timers[id].val;
+      if (timers[id].val <= 0) {
+        clearInterval(timers[id].interval);
+        timers[id].running = false;
+        if (el) el.textContent = '✓';
+        document.getElementById('timerBtn-'+id).textContent = '▶ Start';
+      }
+    }, 1000);
+    document.getElementById('timerBtn-'+id).textContent = '⏸ Pauza';
+  }
+}
+function resetTimer(id, max) {
+  if (timers[id] && timers[id].running) clearInterval(timers[id].interval);
+  timers[id] = { val: max, running: false };
+  const el = document.getElementById('timer-'+id);
+  if (el) el.textContent = max;
+  document.getElementById('timerBtn-'+id).textContent = '▶ Start';
+}
+
+// ─── TANDEM ────────────────────────────────────
+let tandemState = { L: { running: false, val: 0, interval: null }, R: { running: false, val: 0, interval: null } };
+function toggleTandem(side) {
+  const st = tandemState[side];
+  const elId = side === 'L' ? 'tandemLeft' : 'tandemRight';
+  const btnId = 'tandemBtn-'+side;
+  if (st.running) {
+    clearInterval(st.interval); st.running = false;
+    document.getElementById(btnId).textContent = '▶ Start';
+  } else {
+    st.val = 0; st.running = true;
+    document.getElementById(btnId).textContent = '⏹ Stop';
+    st.interval = setInterval(() => {
+      st.val++;
+      document.getElementById(elId).textContent = st.val + 's';
+    }, 1000);
+  }
+}
+
+// ─── EYE EXERCISE ──────────────────────────────
+let eyeSteps = ['👁️ Oczy w lewo →', '😌 Zamknij oczy', '👁️ Otwórz, wróć na wprost'];
+let eyeIdx = 0, eyeRep = 0, eyeTimeout = null, eyeRunning = false;
+function startEye() {
+  if (eyeRunning) return;
+  eyeRunning = true;
+  eyeIdx = 0; eyeRep = 0;
+  document.getElementById('eyeBtn').textContent = '⏳ Trwa...';
+  runEyeStep();
+}
+function runEyeStep() {
+  if (eyeRep >= 10) {
+    document.getElementById('eyePrompt').textContent = '✓ Ukończone!';
+    document.getElementById('eyeProgress').textContent = '10 / 10 powtórzeń';
+    document.getElementById('eyeBtn').textContent = '▶ Start';
+    eyeRunning = false; return;
+  }
+  document.getElementById('eyePrompt').textContent = eyeSteps[eyeIdx];
+  document.getElementById('eyeProgress').textContent = 'Powtórzenie '+(eyeRep+1)+' / 10 · Krok '+(eyeIdx+1)+' / 3';
+  let delay = eyeIdx === 1 ? 1500 : 1200;
+  eyeTimeout = setTimeout(() => {
+    eyeIdx++;
+    if (eyeIdx >= 3) { eyeIdx = 0; eyeRep++; }
+    runEyeStep();
+  }, delay);
+}
+function resetEye() {
+  clearTimeout(eyeTimeout); eyeRunning = false; eyeIdx = 0; eyeRep = 0;
+  document.getElementById('eyePrompt').textContent = 'Naciśnij Start';
+  document.getElementById('eyeProgress').textContent = '';
+  document.getElementById('eyeBtn').textContent = '▶ Start';
+}
+
+// ─── METRONOME ─────────────────────────────────
+let bpm = 40, metroRunning = false, metroInterval = null, metroCtx = null;
+function toggleMetro() {
+  if (metroRunning) {
+    clearInterval(metroInterval); metroRunning = false;
+    document.getElementById('metroBtn').textContent = '▶ Start';
+  } else {
+    metroRunning = true;
+    document.getElementById('metroBtn').textContent = '⏸ Stop';
+    tickMetro();
+    metroInterval = setInterval(tickMetro, 60000/bpm);
+  }
+}
+function tickMetro() {
+  const beat = document.getElementById('metroBeat');
+  beat.classList.add('tick');
+  setTimeout(() => beat.classList.remove('tick'), 100);
+  try {
+    if (!metroCtx) metroCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = metroCtx.createOscillator();
+    const gain = metroCtx.createGain();
+    osc.connect(gain); gain.connect(metroCtx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, metroCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, metroCtx.currentTime + 0.05);
+    osc.start(); osc.stop(metroCtx.currentTime + 0.06);
+  } catch(e) {}
+}
+function changeBpm(delta) {
+  bpm = Math.max(20, Math.min(120, bpm+delta));
+  document.getElementById('metroBpm').textContent = bpm+' BPM';
+  if (metroRunning) { clearInterval(metroInterval); metroInterval = setInterval(tickMetro, 60000/bpm); }
+}
+
+// ─── LASER ─────────────────────────────────────
+let laserRunning = false, laserInterval = null, laserPos = 0;
+const laserPositions = [
+  { left: '82%', top: '12%', label: '↗ Prawa góra — śledź wzrokiem', arrow: '↗' },
+  { left: '18%', top: '88%', label: '↙ Lewy dół — śledź wzrokiem', arrow: '↙' },
+];
+function toggleLaser() {
+  if (laserRunning) {
+    clearInterval(laserInterval); laserRunning = false;
+    document.getElementById('laserBtn').textContent = '▶ Start';
+    document.getElementById('laserInfo').textContent = 'Zatrzymane';
+    document.getElementById('laserArrow').textContent = '—';
+  } else {
+    laserRunning = true;
+    document.getElementById('laserBtn').textContent = '⏸ Stop';
+    moveLaser(); laserInterval = setInterval(moveLaser, 2600);
+  }
+}
+function moveLaser() {
+  const p = laserPositions[laserPos % 2];
+  const dot = document.getElementById('laserDot');
+  dot.style.left = p.left; dot.style.top = p.top;
+  document.getElementById('laserInfo').textContent = p.label;
+  document.getElementById('laserArrow').textContent = p.arrow;
+  laserPos++;
+}
+// init laser position
+window.addEventListener('load', () => {
+  document.getElementById('laserDot').style.left = '82%';
+  document.getElementById('laserDot').style.top = '12%';
+});
+
+// ─── REPS ──────────────────────────────────────
+let repsData = { '6a': 0, '6b': 0 };
+function changeReps(id, delta) {
+  repsData[id] = Math.max(0, (repsData[id]||0) + delta);
+  document.getElementById('reps-'+id).textContent = repsData[id]+' / 20';
+}
+
+// ─── REPORT FORM ───────────────────────────────
+let selectedFeel = '';
+function selectReportFeel(btn, emoji) {
+  document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); selectedFeel = emoji;
+}
+
+// Set today's date
+window.addEventListener('DOMContentLoaded', () => {
+  const d = new Date();
+  const dateStr = d.toISOString().split('T')[0];
+  const dateEl = document.getElementById('rDate');
+  if (dateEl) dateEl.value = dateStr;
+});
+
+function sendReport() {
+  const tandemL = document.getElementById('rTandemL').value;
+  const tandemR = document.getElementById('rTandemR').value;
+  const fatigue = document.getElementById('rFatigue').value;
+  const notes = document.getElementById('rNotes').value;
+  const date = document.getElementById('rDate').value;
+
+  // Collect inline notes
+  const noteTexts = [1,2,3,4,5,6].map(n => {
+    const el = document.getElementById('note-'+n);
+    return el && el.value ? `Ćwiczenie ${n}: ${el.value}` : null;
+  }).filter(Boolean).join('\n');
+
+  const body = `Wyniki sesji Andżeli — ${date}
+
+Tandem lewa noga z przodu: ${tandemL || '—'} sek
+Tandem prawa noga z przodu: ${tandemR || '—'} sek
+Samopoczucie: ${selectedFeel || '—'}
+Zmęczenie: ${fatigue || '—'}
+
+Notatki ogólne:
+${notes || '—'}
+
+Notatki do ćwiczeń:
+${noteTexts || '—'}
+
+---
+Wysłano z aplikacji rehabilitacji Andżeli
+fizjomania-jaroslaw.pl`;
+
+  const mailtoLink = `mailto:fizjomania.jaroslaw@gmail.com?subject=Wyniki sesji Andżeli — ${date}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoLink;
+
+  document.getElementById('sendSuccess').style.display = 'block';
+}
+
+// ══════════════════════════════════════
+// KORTEKS RESET LOGIC
+// ══════════════════════════════════════
+const kExercises = [
+  {
+    id: 1, title: "Kciuk do każdego palca", icon: "👋",
+    steps: [
+      { label: "Krok 1", text: "Weź obie dłonie przed siebie. Prawa ręka: dotknij kciukiem wskazującego, środkowego, serdecznego, małego — powoli i świadomie.", duration: 20 },
+      { label: "Krok 2", text: "Teraz lewa ręka: wskazujący → środkowy → serdeczny → mały. Jeden palec = jeden spokojny oddech.", duration: 20 },
+      { label: "Krok 3", text: "Obie ręce razem, synchronicznie. Poczuj każdy opuszek. 3 pełne rundy.", duration: 25 }
+    ],
+    fingers: ["☝️","🖕","💍","🤙"]
+  },
+  {
+    id: 2, title: "Krzyżowe dotykanie ramion", icon: "🤗",
+    steps: [
+      { label: "Przygotuj się", text: "Siedź prosto lub stań wygodnie. Skrzyżuj ramiona na piersi — prawa ręka na lewym ramieniu, lewa na prawym.", duration: 10 },
+      { label: "Rytm", text: "Naprzemiennie: prawa ręka stuka w lewe ramię, lewa stuka w prawe. Delikatnie, jak tapping. Wolny rytm — raz na 2 sekundy.", duration: 30 },
+      { label: "Finisz", text: "Teraz zwolnij. Tylko delikatne trzymanie — poczuj ciepło dłoni na ramionach. Zostań tak 10 sekund.", duration: 15 }
+    ],
+    fingers: []
+  },
+  {
+    id: 3, title: "Pocieranie opuszków palców", icon: "✋",
+    steps: [
+      { label: "Start", text: "Złącz opuszki wszystkich palców obu dłoni — jak namiot. Zacznij powoli pocierać każdą parę: kciuk-kciuk, wskazujący-wskazujący...", duration: 20 },
+      { label: "Głębiej", text: "Pocieraj opuszki w małych kółkach. Skup się na fakturze — co czujesz pod palcami? To aktywuje korę somatosensoryczną.", duration: 25 },
+      { label: "Wycisz", text: "Zatrzymaj dłonie. Połóż je na udach — wewnętrzną stroną do góry. Poczuj ciepło i mrowienie przez 10 sekund.", duration: 15 }
+    ],
+    fingers: []
+  },
+  {
+    id: 4, title: "Naprzemienne zaciskanie dłoni", icon: "✊",
+    steps: [
+      { label: "Rytm naprzemienny", text: "Prawa dłoń zaciśnięta w pięść → lewa otwarta. Potem zamień. Wolno, 1 raz na 2 sekundy.", duration: 25 },
+      { label: "Zwiększ świadomość", text: "To samo, ale obserwuj napięcie: czujesz różnicę między dłonią zamkniętą a otwartą? Skup się na tej różnicy.", duration: 25 },
+      { label: "Zatrzymaj się", text: "Obie dłonie otwarte, na kolanach. Oddech. Poczuj jak napięcie odpływa z dłoni.", duration: 15 }
+    ],
+    fingers: []
+  },
+  {
+    id: 5, title: "Masaż dłoni punkt po punkcie", icon: "🙌",
+    steps: [
+      { label: "Punkt 1 — kciuk", text: "Lewą dłonią powoli naciśnij kciuk prawej: podstawa, środek, opuszek. Trzy punkty, trzy sekundy każdy.", duration: 20 },
+      { label: "Punkt 2 — kłąb kciuka", text: "Znajdź miękki mięsień u podstawy kciuka. Naciśnij kciukiem lewej dłoni — delikatnie, okrężnie.", duration: 20 },
+      { label: "Zamień ręce", text: "Teraz prawa dłoń masuje lewą: kciuk → kłąb kciuka → każdy palec po kolei. Twoje tempo, twój oddech.", duration: 25 }
+    ],
+    fingers: []
+  }
+];
+
+let kCurrentEx = 0, kCurrentStep = 0, kTimerInterval = null, kTimerSeconds = 0, kBreathCallback = null, kBreathTimer = null;
+
+function kShowScreen(id) {
+  document.querySelectorAll('.k-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+  el.classList.add('active');
+}
+
+function kBuildProgress() {
+  const bar = document.getElementById('k-progress-bar'); bar.innerHTML = '';
+  for (let i = 0; i < kExercises.length; i++) {
+    const pip = document.createElement('div'); pip.className = 'k-pip';
+    if (i < kCurrentEx) pip.classList.add('done');
+    else if (i === kCurrentEx) pip.classList.add('current');
+    bar.appendChild(pip);
+  }
+}
+
+function kBuildFingerTrack(ex) {
+  const track = document.getElementById('k-finger-track'); track.innerHTML = '';
+  if (ex.fingers && ex.fingers.length > 0) {
+    ex.fingers.forEach((f, i) => {
+      const dot = document.createElement('div'); dot.className = 'k-finger-dot'; dot.id = 'kfdot-'+i;
+      dot.textContent = f; track.appendChild(dot);
+    });
+  }
+}
+
+function kAnimateFingers(stepIdx) {
+  document.querySelectorAll('.k-finger-dot').forEach((d, i) => {
+    d.classList.remove('active','done');
+    if (i < stepIdx) d.classList.add('done');
+    if (i === stepIdx) d.classList.add('active');
+  });
+}
+
+function kStartTimer(seconds) {
+  clearInterval(kTimerInterval);
+  kTimerSeconds = seconds;
+  const circle = document.getElementById('k-timer-circle');
+  const num = document.getElementById('k-timer-num');
+  const total = 213.6;
+  num.textContent = seconds;
+  circle.style.strokeDashoffset = 0;
+  kTimerInterval = setInterval(() => {
+    kTimerSeconds--;
+    num.textContent = kTimerSeconds;
+    circle.style.strokeDashoffset = total * (1 - kTimerSeconds / seconds);
+    if (kTimerSeconds <= 0) { clearInterval(kTimerInterval); num.textContent = '✓'; }
+  }, 1000);
+}
+
+function kRenderExercise() {
+  const ex = kExercises[kCurrentEx];
+  const step = ex.steps[kCurrentStep];
+  kBuildProgress(); kBuildFingerTrack(ex);
+  document.getElementById('k-ex-label').textContent = `Ćwiczenie ${kCurrentEx+1} z ${kExercises.length}`;
+  document.getElementById('k-ex-title').textContent = ex.title;
+  document.getElementById('k-hand-icon').textContent = ex.icon;
+  document.getElementById('k-step-label').textContent = step.label;
+  document.getElementById('k-instruction-text').textContent = step.text;
+  if (ex.fingers && ex.fingers.length > 0) kAnimateFingers(Math.min(kCurrentStep, ex.fingers.length-1));
+  const isLast = kCurrentStep === ex.steps.length-1 && kCurrentEx === kExercises.length-1;
+  document.getElementById('k-btn-next').textContent = isLast ? 'Ukończ protokół ✦' : 'Dalej →';
+  kStartTimer(step.duration);
+}
+
+function kNextStep() {
+  clearInterval(kTimerInterval);
+  const ex = kExercises[kCurrentEx];
+  if (kCurrentStep < ex.steps.length-1) {
+    kCurrentStep++; kRenderExercise();
+  } else {
+    if (kCurrentEx < kExercises.length-1) {
+      const nextEx = kCurrentEx+1;
+      kShowBreath(() => {
+        kCurrentEx = nextEx; kCurrentStep = 0;
+        kShowScreen('k-screen-exercise'); kRenderExercise();
+      });
+    } else {
+      kShowScreen('k-screen-complete');
+    }
+  }
+}
+
+function kShowBreath(callback) {
+  kShowScreen('k-screen-breath');
+  const circle = document.getElementById('k-breath-circle');
+  const action = document.getElementById('k-breath-action');
+  const count = document.getElementById('k-breath-count');
+  kBreathCallback = callback;
+  let phase = 0, rounds = 0;
+  const phases = [
+    { label:'Wdech...', sec:4, expand:true },
+    { label:'Zatrzymaj', sec:4, expand:true },
+    { label:'Wydech...', sec:6, expand:false },
+    { label:'Pauza...', sec:2, expand:false }
+  ];
+  function runPhase() {
+    const p = phases[phase];
+    action.textContent = p.label; count.textContent = p.sec+' sekund';
+    circle.classList.remove('expand','contract'); void circle.offsetWidth;
+    circle.classList.add(p.expand ? 'expand' : 'contract');
+    kBreathTimer = setTimeout(() => {
+      phase++;
+      if (phase >= phases.length) { phase = 0; rounds++; if (rounds >= 2) { callback(); return; } }
+      runPhase();
+    }, p.sec * 1000);
+  }
+  runPhase();
+}
+
+function kSkipBreath() {
+  clearTimeout(kBreathTimer);
+  if (kBreathCallback) kBreathCallback();
+}
+
+function kStartProtocol() {
+  kCurrentEx = 0; kCurrentStep = 0;
+  kShowScreen('k-screen-exercise'); kRenderExercise();
+}
+
+function kRestartProtocol() { kStartProtocol(); }
+
+function kSelectFeel(btn) {
+  document.querySelectorAll('.k-feel-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+</script>
+</body>
+</html>
