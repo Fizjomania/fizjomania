@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz UKŁ – Fizjomania</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --terra:    #C47348;
+    --terra-d:  #A05A30;
+    --terra-l:  #F0DFCF;
+    --green:    #5A7A5A;
+    --green-l:  #8CAF8C;
+    --green-xl: #EAF2EA;
+    --cream:    #FCF8F2;
+    --dark:     #2D2826;
+    --grey:     #8A8078;
+    --grey-l:   #D5CEC8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- noise texture overlay ---- */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* ---- decorative blobs ---- */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.18;
+  }
+  .blob-1 { width: 500px; height: 500px; background: var(--terra); top: -150px; right: -150px; }
+  .blob-2 { width: 400px; height: 400px; background: var(--green); bottom: -100px; left: -100px; }
+
+  /* ---- layout ---- */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ---- header ---- */
+  header {
+    padding: 40px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 48px;
+  }
+  .brand-wave {
+    display: flex; gap: 3px; align-items: flex-end;
+  }
+  .brand-wave span {
+    display: block;
+    width: 8px;
+    border-radius: 4px;
+    background: var(--terra);
+  }
+  .brand-wave span:nth-child(1) { height: 18px; }
+  .brand-wave span:nth-child(2) { height: 26px; }
+  .brand-wave span:nth-child(3) { height: 14px; }
+  .brand-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--terra);
+    letter-spacing: 0.02em;
+  }
+
+  .quiz-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--green);
+    background: var(--green-xl);
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Lora', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--dark);
+    margin-bottom: 16px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--terra);
+  }
+  .subtitle {
+    font-size: 1rem;
+    color: var(--grey);
+    line-height: 1.6;
+    max-width: 520px;
+    margin-bottom: 40px;
+  }
+
+  /* ---- progress ---- */
+  .progress-wrap {
+    margin-bottom: 40px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+  .progress-bar-bg {
+    height: 4px;
+    background: var(--grey-l);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--terra), var(--terra-d));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* ---- question card ---- */
+  .question-card {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 4px 40px rgba(45,40,38,0.08);
+    margin-bottom: 24px;
+    border: 1px solid rgba(196,115,72,0.1);
+    animation: slideIn 0.4s cubic-bezier(0.22,1,0.36,1);
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .q-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 14px;
+  }
+  .q-text {
+    font-family: 'Lora', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--dark);
+    margin-bottom: 28px;
+  }
+
+  /* ---- options ---- */
+  .options { display: flex; flex-direction: column; gap: 12px; }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--cream);
+    border: 2px solid var(--grey-l);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    color: var(--dark);
+    text-align: left;
+    line-height: 1.4;
+  }
+  .option-btn:hover {
+    border-color: var(--terra);
+    background: var(--terra-l);
+    transform: translateX(4px);
+  }
+  .option-btn.selected {
+    border-color: var(--terra);
+    background: var(--terra-l);
+  }
+  .option-btn.selected .opt-dot { background: var(--terra); }
+  .option-btn.correct {
+    border-color: var(--green);
+    background: var(--green-xl);
+  }
+  .option-btn.wrong {
+    border-color: #C47348;
+    background: #F9EDE3;
+    opacity: 0.6;
+  }
+
+  .opt-dot {
+    min-width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--grey-l);
+    background: white;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .opt-dot::after {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: white;
+    transform: scale(0);
+    transition: transform 0.15s;
+  }
+  .option-btn.selected .opt-dot::after { transform: scale(1); }
+
+  /* ---- nav buttons ---- */
+  .nav-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .btn-next {
+    background: var(--terra);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+  }
+  .btn-next.visible {
+    opacity: 1; pointer-events: all; transform: translateY(0);
+  }
+  .btn-next:hover { background: var(--terra-d); transform: translateY(-1px); }
+  .btn-next svg { transition: transform 0.2s; }
+  .btn-next:hover svg { transform: translateX(3px); }
+
+  /* ---- start screen ---- */
+  #screen-start { animation: slideIn 0.5s ease; }
+  .start-visual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .start-card {
+    padding: 24px;
+    border-radius: 18px;
+    text-align: center;
+  }
+  .start-card.terra { background: var(--terra); color: white; }
+  .start-card.green { background: var(--green); color: white; }
+  .start-card .icon { font-size: 2.2rem; margin-bottom: 8px; }
+  .start-card .sc-title { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; }
+  .start-card .sc-sub { font-size: 0.75rem; opacity: 0.8; margin-top: 4px; }
+
+  .meta-row {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+  .meta-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.85rem; color: var(--grey);
+  }
+  .meta-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .btn-start {
+    width: 100%;
+    padding: 18px;
+    background: var(--terra);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-start:hover { background: var(--terra-d); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(196,115,72,0.3); }
+
+  /* ---- result screen ---- */
+  #screen-result { display: none; animation: slideIn 0.6s ease; }
+  .result-card {
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 40px rgba(45,40,38,0.10);
+    margin-bottom: 24px;
+  }
+  .result-header {
+    padding: 40px 40px 32px;
+    position: relative;
+  }
+  .result-header.terra-bg { background: var(--terra); }
+  .result-header.green-bg { background: var(--green); }
+  .result-header.balanced-bg { background: linear-gradient(135deg, var(--terra), var(--green)); }
+  .result-icon { font-size: 3rem; margin-bottom: 12px; }
+  .result-type {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: rgba(255,255,255,0.75); margin-bottom: 8px;
+  }
+  .result-title {
+    font-family: 'Lora', serif;
+    font-size: 1.9rem; font-weight: 600;
+    color: white; line-height: 1.2;
+  }
+  .result-score-badge {
+    position: absolute; top: 32px; right: 32px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.35);
+    border-radius: 50%; width: 72px; height: 72px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: white;
+  }
+  .result-score-badge .sc-num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+  .result-score-badge .sc-txt { font-size: 0.6rem; opacity: 0.85; }
+
+  .result-body { padding: 32px 40px; }
+  .result-desc {
+    font-size: 0.95rem; color: var(--grey); line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .trait-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+  .trait-item {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: var(--dark);
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .trait-dot { min-width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; }
+
+  .tips-title {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--terra);
+    margin-bottom: 14px;
+  }
+  .tips-list { display: flex; flex-direction: column; gap: 10px; }
+  .tip-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 0.9rem; line-height: 1.5; color: var(--dark);
+  }
+  .tip-num {
+    min-width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--terra-l);
+    color: var(--terra);
+    font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+
+  .cta-box {
+    background: var(--terra);
+    border-radius: 20px;
+    padding: 32px 36px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .cta-box h3 {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem; color: white;
+    margin-bottom: 10px;
+  }
+  .cta-box p { font-size: 0.9rem; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 20px; }
+  .cta-keyword {
+    display: inline-block;
+    background: white; color: var(--terra);
+    font-weight: 700; font-size: 1rem;
+    padding: 12px 32px;
+    border-radius: 50px;
+    letter-spacing: 0.08em;
+  }
+
+  .btn-retake {
+    width: 100%; padding: 16px;
+    background: transparent;
+    border: 2px solid var(--grey-l);
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem; color: var(--grey);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-retake:hover { border-color: var(--terra); color: var(--terra); }
+
+  /* ---- bar chart in result ---- */
+  .score-bars { margin-bottom: 28px; }
+  .bar-row { margin-bottom: 14px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; }
+  .bar-label .bl-name { font-weight: 600; }
+  .bar-label .bl-pct { color: var(--grey); }
+  .bar-bg { height: 8px; background: var(--grey-l); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width 1s cubic-bezier(0.22,1,0.36,1); }
+  .bar-fill.terra { background: var(--terra); }
+  .bar-fill.green { background: var(--green); }
+
+  /* responsive */
+  @media (max-width: 520px) {
+    .question-card { padding: 28px 24px; }
+    .result-body { padding: 24px; }
+    .result-header { padding: 28px 24px; }
+    .trait-grid { grid-template-columns: 1fr; }
+    .start-visual { grid-template-columns: 1fr; }
+    .cta-box { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="container">
+
+  <!-- BRAND -->
+  <header>
+    <div class="brand">
+      <div class="brand-wave">
+        <span></span><span></span><span></span>
+      </div>
+      <span class="brand-name">Fizjomania</span>
+    </div>
+  </header>
+
+  <!-- ===== START SCREEN ===== -->
+  <div id="screen-start">
+    <div class="quiz-tag">Quiz diagnostyczny</div>
+    <h1>Który tryb rządzi<br>Twoim <em>układem nerwowym?</em></h1>
+    <p class="subtitle">10 pytań, które pokażą Ci, czy dominuje u Ciebie tryb współczulny (stres, alarm) czy przywspółczulny (spokój, regeneracja) — i co z tym zrobić.</p>
+
+    <div class="start-visual">
+      <div class="start-card terra">
+        <div class="icon">⚡</div>
+        <div class="sc-title">Współczulny</div>
+        <div class="sc-sub">Walcz albo uciekaj</div>
+      </div>
+      <div class="start-card green">
+        <div class="icon">🌿</div>
+        <div class="sc-title">Przywspółczulny</div>
+        <div class="sc-sub">Odpoczynek i regeneracja</div>
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-item"><div class="meta-dot" style="background:var(--terra)"></div>10 pytań</div>
+      <div class="meta-item"><div class="meta-dot" style="background:var(--green)"></div>~3 minuty</div>
+      <div class="meta-item"><div class="meta-dot" style="background:var(--grey-l)"></div>Wynik od razu</div>
+    </div>
+
+    <button class="btn-start" onclick="startQuiz()">Zacznij quiz →</button>
+  </div>
+
+  <!-- ===== QUIZ SCREEN ===== -->
+  <div id="screen-quiz" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="prog-label">Pytanie 1 z 10</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="question-card" id="q-card">
+      <div class="q-number" id="q-number">PYTANIE 1</div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options-list"></div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">
+        Dalej
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== RESULT SCREEN ===== -->
+  <div id="screen-result">
+    <div class="result-card">
+      <div class="result-header" id="result-header">
+        <div class="result-score-badge">
+          <div class="sc-num" id="res-score-num"></div>
+          <div class="sc-txt">pkt</div>
+        </div>
+        <div class="result-icon" id="res-icon"></div>
+        <div class="result-type" id="res-type"></div>
+        <div class="result-title" id="res-title"></div>
+      </div>
+      <div class="result-body">
+        <div class="score-bars" id="score-bars"></div>
+        <p class="result-desc" id="res-desc"></p>
+
+        <div class="trait-grid" id="res-traits"></div>
+
+        <div class="tips-title">Co możesz zrobić już dziś?</div>
+        <div class="tips-list" id="res-tips"></div>
+      </div>
+    </div>
+
+    <button class="btn-retake" onclick="retake()">↩ Zrób quiz jeszcze raz</button>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+const questions = [
+  {
+    text: "Jak opisałabyś jakość swojego snu w ostatnich 2 tygodniach?",
+    answers: [
+      { text: "Zasypiam łatwo i budzę się wypoczęta",       sym: 0, para: 2 },
+      { text: "Zasypianie zajmuje mi chwilę, ale sypiam ok",sym: 1, para: 1 },
+      { text: "Trudno mi zasnąć, często się wybudzam",      sym: 2, para: 0 },
+      { text: "Budzę się zmęczona mimo długiego snu",       sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak reagujesz na nieoczekiwane zmiany planów lub stresującą wiadomość?",
+    answers: [
+      { text: "Odczuwam chwilowy stres, ale szybko wracam do równowagi", sym: 0, para: 2 },
+      { text: "Potrzebuję trochę czasu, ale daję radę",      sym: 1, para: 1 },
+      { text: "Długo nie mogę się uspokoić, powracam do tego myślami", sym: 2, para: 0 },
+      { text: "Czuję się sparaliżowana i mam trudność z działaniem", sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak opisałabyś swój oddech w ciągu dnia?",
+    answers: [
+      { text: "Głęboki i spokojny, oddycham przeponą",       sym: 0, para: 2 },
+      { text: "Różnie, zależy od sytuacji",                  sym: 1, para: 1 },
+      { text: "Płytki, czasem łapię się na wstrzymywaniu oddechu", sym: 2, para: 0 },
+      { text: "Szybki, głównie klatką piersiową",            sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak czujesz się po posiłku?",
+    answers: [
+      { text: "Dobrze – trawię bez problemów",               sym: 0, para: 2 },
+      { text: "Zazwyczaj ok, zdarza się lekkie wzdęcie",    sym: 1, para: 1 },
+      { text: "Często mam wzdęcia lub uczucie ciężkości",   sym: 2, para: 0 },
+      { text: "Mam nieregularne wypróżnienia, IBS",          sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak często odczuwasz napięcie w mięśniach — szczęki, barki, kark?",
+    answers: [
+      { text: "Rzadko lub wcale",                            sym: 0, para: 2 },
+      { text: "Od czasu do czasu, np. przy stresie",        sym: 1, para: 1 },
+      { text: "Prawie codziennie",                           sym: 2, para: 0 },
+      { text: "Permanentnie — nie pamiętam kiedy było inaczej", sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak opisałabyś swój poziom energii w ciągu dnia?",
+    answers: [
+      { text: "Stabilny – mam energię od rana do wieczora", sym: 0, para: 2 },
+      { text: "Rano dobrze, po południu lekki spadek",      sym: 1, para: 1 },
+      { text: "Duże wahania – raz wysoki, raz całkowity brak", sym: 2, para: 0 },
+      { text: "Chroniczne zmęczenie, mimo odpoczynku",       sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Co dzieje się z Twoją koncentracją, kiedy zaczynasz nowe zadanie?",
+    answers: [
+      { text: "Łatwo się skupiam i kończę zadania",          sym: 0, para: 2 },
+      { text: "Potrzebuję chwili, ale potem idzie ok",       sym: 1, para: 1 },
+      { text: "Trudno mi utrzymać uwagę, często się rozpraszam", sym: 2, para: 0 },
+      { text: "Mam mgłę mózgową, trudno mi myśleć jasno",   sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak Twoje ciało reaguje na spacer na świeżym powietrzu?",
+    answers: [
+      { text: "Czuję wyraźne rozluźnienie i poprawę nastroju", sym: 0, para: 2 },
+      { text: "Trochę pomaga, ale efekt jest krótki",        sym: 1, para: 1 },
+      { text: "Mam trudność, żeby w ogóle zmotywować się wyjść", sym: 2, para: 0 },
+      { text: "Podczas spaceru wciąż jestem w głowie zajęta problemami", sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak często odczuwasz niepokój lub poczucie zagrożenia bez wyraźnej przyczyny?",
+    answers: [
+      { text: "Rzadko – jestem z reguły spokojna",           sym: 0, para: 2 },
+      { text: "Czasem, szczególnie w trudniejszych okresach", sym: 1, para: 1 },
+      { text: "Dość często – to uczucie jest mi znajome",    sym: 2, para: 0 },
+      { text: "Prawie stale – jakby alarm nigdy nie gasł",   sym: 2, para: 0 },
+    ]
+  },
+  {
+    text: "Jak reagujesz na chwile ciszy i bezczynności?",
+    answers: [
+      { text: "Cenię je – ładuję w nich baterie",            sym: 0, para: 2 },
+      { text: "Lubię, ale potrzebuję do tego odpowiednich warunków", sym: 1, para: 1 },
+      { text: "Czuję się niespokojnie – muszę coś robić",   sym: 2, para: 0 },
+      { text: "Cisza bywa przytłaczająca lub wyzwala niepokojące myśli", sym: 2, para: 0 },
+    ]
+  },
+];
+
+let current = 0;
+let symScore = 0;
+let paraScore = 0;
+let answered = false;
+
+function startQuiz() {
+  document.getElementById('screen-start').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[current];
+  const pct = Math.round((current / questions.length) * 100);
+
+  document.getElementById('prog-label').textContent = `Pytanie ${current+1} z ${questions.length}`;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('q-number').textContent = `PYTANIE ${current+1}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<div class="opt-dot"></div><span>${a.text}</span>`;
+    btn.addEventListener('click', () => selectAnswer(i));
+    list.appendChild(btn);
+  });
+
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.classList.remove('visible');
+  nextBtn.textContent = current === questions.length - 1 ? 'Zobacz wynik →' : 'Dalej';
+  nextBtn.innerHTML = current === questions.length - 1
+    ? 'Zobacz wynik <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : 'Dalej <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // re-animate card
+  const card = document.getElementById('q-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'slideIn 0.4s cubic-bezier(0.22,1,0.36,1)';
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons[idx].classList.add('selected');
+  symScore  += q.answers[idx].sym;
+  paraScore += q.answers[idx].para;
+  document.getElementById('btn-next').classList.add('visible');
+}
+
+function nextQuestion() {
+  current++;
+  if (current < questions.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('screen-quiz').style.display = 'none';
+  const res = document.getElementById('screen-result');
+  res.style.display = 'block';
+
+  const total = symScore + paraScore;
+  const symPct  = Math.round((symScore / total) * 100);
+  const paraPct = Math.round((paraScore / total) * 100);
+
+  const maxSym  = questions.length * 2;
+  const maxPara = questions.length * 2;
+  const symNorm  = Math.round((symScore / maxSym) * 100);
+  const paraNorm = Math.round((paraScore / maxPara) * 100);
+
+  let type, icon, title, headerClass, desc, traits, tips;
+
+  if (symScore > paraScore + 4) {
+    type = 'DOMINACJA TRYBU';
+    icon = '⚡';
+    title = 'Układ Współczulny';
+    headerClass = 'terra-bg';
+    desc = 'Twój układ nerwowy jest w trybie ciągłego alarmu. Ciało nieustannie mobilizuje zasoby — kortyzol jest podwyższony, mięśnie spięte, a regeneracja utrudniona. To nie jest Twoja wina — to wyuczona odpowiedź na długotrwały stres. Dobra wiadomość: nerw błędny można wytrenować.';
+    traits = [
+      { text: 'Trudności z zasypianiem lub wybudzanie się', color: 'var(--terra)' },
+      { text: 'Napięcie w karku, szczękach, barkach', color: 'var(--terra)' },
+      { text: 'Problemy z trawieniem (IBS, wzdęcia)', color: 'var(--terra)' },
+      { text: 'Mgła mózgowa i trudności z koncentracją', color: 'var(--terra)' },
+      { text: 'Chroniczne zmęczenie mimo snu', color: 'var(--terra)' },
+      { text: 'Niepokój bez wyraźnej przyczyny', color: 'var(--terra)' },
+    ];
+    tips = [
+      'Zacznij od <strong>3-minutowego nucenia</strong> — aktywuje nerw błędny bezpośrednio',
+      'Wprowadź <strong>wydłużony wydech</strong> (wdech 4s → wydech 8s) raz dziennie',
+      'Zrób <strong>panoramiczne widzenie</strong> — rozszerz wzrok na boki na 30 sekund',
+      'Ogranicz scrollowanie wieczorem — niebieskiemu światłu mówi ciało, że jest zagrożenie',
+    ];
+  } else if (paraScore > symScore + 4) {
+    type = 'DOMINACJA TRYBU';
+    icon = '🌿';
+    title = 'Układ Przywspółczulny';
+    headerClass = 'green-bg';
+    desc = 'Twój układ nerwowy działa w trybie spokoju i regeneracji. Oddychasz głęboko, trawisz dobrze, regenerujesz się efektywnie. To wspaniały stan — warto świadomie dbać o to, co go utrzymuje, bo życie potrafi szybko przesunąć skalę.';
+    traits = [
+      { text: 'Dobra jakość snu i regeneracja', color: 'var(--green)' },
+      { text: 'Stabilny poziom energii w ciągu dnia', color: 'var(--green)' },
+      { text: 'Spokojne trawienie', color: 'var(--green)' },
+      { text: 'Łatwość skupienia', color: 'var(--green)' },
+      { text: 'Szybki powrót do równowagi po stresie', color: 'var(--green)' },
+      { text: 'Elastyczny układ nerwowy', color: 'var(--green)' },
+    ];
+    tips = [
+      'Kontynuuj praktyki, które Ci służą — regularność to klucz',
+      'Naucz się rozpoznawać <strong>wczesne sygnały</strong> dysregulacji, zanim się nasilą',
+      'Zadbaj o <strong>tonus nerwu błędnego</strong> — zimne natryski, śpiew, HRV',
+      'Podziel się tym, co Ci działa — Twoje ciało ma wiedzę, którą warto przekazać',
+    ];
+  } else {
+    type = 'STAN PRZEJŚCIOWY';
+    icon = '⚖️';
+    title = 'Balans — praca w toku';
+    headerClass = 'balanced-bg';
+    desc = 'Twój układ nerwowy jest w miejscu między stabilnością a napięciem. Masz pewne zasoby, ale też sygnały, że coś wymaga uwagi. To dobry moment, żeby zacząć świadomą pracę z nerwem błędnym — zanim skala przesunie się w stronę dysregulacji.';
+    traits = [
+      { text: 'Zmienne poczucie energii w tygodniu', color: 'var(--terra)' },
+      { text: 'Regenerujesz się, ale nie zawsze wystarcza', color: 'var(--terra)' },
+      { text: 'Dobra odpowiedź na stres... w granicach', color: 'var(--green)' },
+      { text: 'Potencjał do poprawy jest bardzo wysoki', color: 'var(--green)' },
+    ];
+    tips = [
+      'Zacznij od <strong>10-sekundowego nucenia</strong> po każdym stresującym wydarzeniu',
+      'Obserwuj, kiedy Twoje ciało wchodzi w tryb alarmu — jakie są wyzwalacze?',
+      'Wprowadź <strong>regularny rytm dobowy</strong> — to podstawa regulacji UKŁ',
+      'Rozważ pomiar <strong>HRV</strong>, żeby śledzić postępy',
+    ];
+  }
+
+  document.getElementById('res-icon').textContent = icon;
+  document.getElementById('res-type').textContent = type;
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('result-header').className = 'result-header ' + headerClass;
+  document.getElementById('res-score-num').textContent = symScore + '/' + paraScore;
+  document.getElementById('res-desc').textContent = desc;
+
+  // score bars
+  document.getElementById('score-bars').innerHTML = `
+    <div class="bar-row">
+      <div class="bar-label"><span class="bl-name">Współczulny</span><span class="bl-pct">${symNorm}%</span></div>
+      <div class="bar-bg"><div class="bar-fill terra" style="width:0%" data-target="${symNorm}%"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span class="bl-name">Przywspółczulny</span><span class="bl-pct">${paraNorm}%</span></div>
+      <div class="bar-bg"><div class="bar-fill green" style="width:0%" data-target="${paraNorm}%"></div></div>
+    </div>
+  `;
+
+  // traits
+  document.getElementById('res-traits').innerHTML = traits.map(t =>
+    `<div class="trait-item"><div class="trait-dot" style="background:${t.color}"></div>${t.text}</div>`
+  ).join('');
+
+  // tips
+  document.getElementById('res-tips').innerHTML = tips.map((t,i) =>
+    `<div class="tip-item"><div class="tip-num">${i+1}</div><div>${t}</div></div>`
+  ).join('');
+
+  // animate bars after slight delay
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(b => {
+      b.style.width = b.dataset.target;
+    });
+  }, 300);
+
+  res.scrollIntoView({ behavior: 'smooth' });
+}
+
+function retake() {
+  current = 0; symScore = 0; paraScore = 0;
+  document.getElementById('screen-result').style.display = 'none';
+  document.getElementById('screen-start').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
