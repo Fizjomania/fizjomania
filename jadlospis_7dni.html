@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jadłospis 7-dniowy</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #3a6b4a;
+    --green-light: #e8f0eb;
+    --green-mid: #b5cfbb;
+    --amber: #c47c2b;
+    --amber-light: #fdf3e7;
+    --red-soft: #c0392b;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --border: #e5e0d8;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--green);
+    color: white;
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+  }
+  header h1 {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+  }
+  header p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    font-weight: 300;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .alert-bar {
+    background: #fef3cd;
+    border-left: 4px solid var(--amber);
+    padding: 0.9rem 1.5rem;
+    font-size: 0.82rem;
+    color: #7a5a00;
+    line-height: 1.6;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .alert-bar span { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  .tabs-wrapper {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    overflow-x: auto;
+  }
+  .tabs {
+    display: flex;
+    max-width: 860px;
+    margin: 0 auto;
+    gap: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 0.9rem 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    min-width: 72px;
+  }
+  .tab-btn:hover { color: var(--green); }
+  .tab-btn.active { color: var(--green); border-bottom-color: var(--green); font-weight: 500; }
+  .tab-btn .day-num { display: block; font-size: 0.7rem; opacity: 0.6; font-weight: 300; }
+
+  .content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .day-panel { display: none; }
+  .day-panel.active { display: block; }
+
+  .day-header {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--green-light);
+  }
+
+  .meals-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .meal-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow: hidden;
+  }
+  .meal-label {
+    flex-shrink: 0;
+    width: 120px;
+    padding: 0.9rem 0.8rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 4px;
+    min-height: 70px;
+  }
+  .meal-label .icon { font-size: 1.3rem; }
+  .meal-label.sniad { background: #4a7c59; }
+  .meal-label.ii-sniad { background: #6e9f7b; }
+  .meal-label.obiad { background: #2d5a3d; }
+  .meal-label.podwiecz { background: #8fba96; color: #1a3d25; }
+  .meal-label.kolacja { background: #3d6b4e; }
+
+  .meal-body {
+    flex: 1;
+    padding: 0.9rem 1rem;
+  }
+  .meal-name {
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .meal-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .meal-tip {
+    display: inline-block;
+    margin-top: 0.4rem;
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  /* Shopping list */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .shop-cat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .shop-cat-head {
+    background: var(--green);
+    color: white;
+    padding: 0.6rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .shop-cat-head .ico { font-size: 1rem; }
+  .shop-items { padding: 0.5rem 0; }
+  .shop-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0.3rem 1rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--border);
+  }
+  .shop-item:last-child { border-bottom: none; }
+  .shop-item:hover { background: var(--green-light); }
+  .shop-item input[type=checkbox] { flex-shrink: 0; accent-color: var(--green); width: 14px; height: 14px; }
+  .shop-item label { flex: 1; cursor: pointer; line-height: 1.4; }
+  .shop-item label.checked { text-decoration: line-through; color: var(--text-muted); }
+  .qty { font-size: 0.75rem; color: var(--amber); font-weight: 500; white-space: nowrap; }
+
+  .notes-box {
+    background: var(--amber-light);
+    border: 1px solid #f0d9b5;
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.83rem;
+    line-height: 1.7;
+    color: #5a3e10;
+  }
+  .notes-box h3 { font-family: 'Lora', serif; font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .notes-box ul { padding-left: 1.2rem; }
+  .notes-box li { margin-bottom: 0.2rem; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.5rem; }
+    .meal-label { width: 80px; font-size: 0.65rem; }
+    .shop-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Jadłospis 7-dniowy</h1>
+  <p>Dieta kardioprotekcyjna · bez pszenicy · bez nabiału krowiego · 50+ · praca zmianowa</p>
+</header>
+
+<div class="alert-bar">
+  <span>⚠️</span>
+  <div>Dieta zaprojektowana z myślą o obniżeniu cholesterolu LDL i całkowitego. Kluczowe elementy: <strong>płatki owsiane codziennie</strong> (beta-glukan), oliwa zamiast masła, dużo warzyw i błonnika, ograniczenie tłuszczów nasyconych. Skonsultuj jadłospis z lekarzem lub dietetykiem.</div>
+</div>
+
+<div class="tabs-wrapper">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showDay(0,this)"><span class="day-num">Dzień 1</span>Poniedziałek</button>
+    <button class="tab-btn" onclick="showDay(1,this)"><span class="day-num">Dzień 2</span>Wtorek</button>
+    <button class="tab-btn" onclick="showDay(2,this)"><span class="day-num">Dzień 3</span>Środa</button>
+    <button class="tab-btn" onclick="showDay(3,this)"><span class="day-num">Dzień 4</span>Czwartek</button>
+    <button class="tab-btn" onclick="showDay(4,this)"><span class="day-num">Dzień 5</span>Piątek</button>
+    <button class="tab-btn" onclick="showDay(5,this)"><span class="day-num">Dzień 6</span>Sobota</button>
+    <button class="tab-btn" onclick="showDay(6,this)"><span class="day-num">Dzień 7</span>Niedziela</button>
+    <button class="tab-btn" onclick="showDay(7,this)"><span class="day-num">🛒</span>Zakupy</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- DAY 1 -->
+<div class="day-panel active" id="day-0">
+  <div class="day-header">Poniedziałek</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Owsianka jabłkowa z orzechami</div>
+        <div class="meal-desc">Płatki owsiane górskie (6 łyżek) gotowane na mleku kozim, starte jabłko, cynamon, łyżka miodu, garść orzechów włoskich</div>
+        <span class="meal-tip">✓ Beta-glukan z owsa obniża LDL</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🍎</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Jabłko z masłem migdałowym</div>
+        <div class="meal-desc">Duże jabłko + 2 łyżki masła migdałowego (lub garść migdałów)</div>
+        <span class="meal-tip">✓ Pektyny jabłka = naturalny bloker cholesterolu</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Pierś z kurczaka pieczona w ziołach</div>
+        <div class="meal-desc">Pierś z kurczaka ~200g marynowana w oliwie, czosnku, rozmaryniu i tymianku · kasza gryczana (3/4 szklanki suchej) · surówka z tartej marchewki z sokiem z cytryny i pestkami dyni</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🥛</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Jogurt kozi z owocami</div>
+        <div class="meal-desc">150g jogurtu koziego naturalnego + pokrojona gruszka lub jabłko + łyżeczka cynamonu</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Jajecznica z warzywami</div>
+        <div class="meal-desc">2 jaja smażone na oliwie z oliwek, pomidor, ogórek, szczypiorek · kromka chleba gryczanego</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 2 -->
+<div class="day-panel" id="day-1">
+  <div class="day-header">Wtorek</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Kasza jaglana z jabłkiem</div>
+        <div class="meal-desc">Kasza jaglana ugotowana na mleku kozim, starte jabłko, cynamon, łyżka miodu, garść orzechów</div>
+        <span class="meal-tip">✓ Kasza jaglana jest alkaliczna i łatwo strawna</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🥕</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Warzywa z serkiem kozim</div>
+        <div class="meal-desc">Marchewka + rzodkiewki + 2 łyżki serka koziego twarogowego</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Indyk duszony z piekarnika</div>
+        <div class="meal-desc">Udziec lub filet indyka ~200g duszony z cebulą, czosnkiem, rozmarynem i warzywami · kasza pęczak (3/4 szklanki suchej) · brokuły gotowane na parze z oliwą i czosnkiem</div>
+        <span class="meal-tip">✓ Indyk = chude białko, mało tłuszczów nasyconych</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🍎</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Jabłko + orzechy</div>
+        <div class="meal-desc">Jabłko + garść (30g) orzechów włoskich</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Sałatka z pieczonych warzyw</div>
+        <div class="meal-desc">Papryka, cukinia i cebula pieczone w oliwie · pestki dyni · skropione oliwą i sokiem z cytryny · chleb gryczany</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 3 -->
+<div class="day-panel" id="day-2">
+  <div class="day-header">Środa</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Owsianka z gruszką i cynamonem</div>
+        <div class="meal-desc">Płatki owsiane (6 łyżek) na mleku kozim, pokrojona gruszka lub jabłko, cynamon, łyżka miodu, orzechy włoskie</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🥦</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Surowe warzywa</div>
+        <div class="meal-desc">Marchewka, rzodkiewki, seler naciowy · opcjonalnie hummus 2 łyżki</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Wątróbka drobiowa z jabłkiem i cebulą</div>
+        <div class="meal-desc">Wątróbka z kurczaka ~150g duszona na oliwie z cebulą i kawałkami jabłka · kasza gryczana · gotowane buraczki z oliwą i szczypiorkiem</div>
+        <span class="meal-tip">⚠ Wątróbka max 1× w tygodniu — bogata w żelazo, ale i cholesterol</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🥛</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Jogurt kozi z pestkami</div>
+        <div class="meal-desc">150g jogurtu koziego + łyżka pestek dyni + jabłko</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Zupa warzywna z kaszą</div>
+        <div class="meal-desc">Bulion warzywny z marchewką, pietruszką, selerem, ziemniakiem i kaszą gryczaną lub jaglaną · chleb gryczany</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 4 -->
+<div class="day-panel" id="day-3">
+  <div class="day-header">Czwartek</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Omlet warzywny z serkiem kozim</div>
+        <div class="meal-desc">2 jaja roztrzepane z odrobiną mleka koziego, papryka czerwona + cebula smażone na oliwie · łyżka serka koziego na wierzchu · chleb gryczany</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🍎</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Jabłko pieczone z cynamonem</div>
+        <div class="meal-desc">Jabłko pieczone z cynamonem i łyżeczką miodu · garść orzechów włoskich</div>
+        <span class="meal-tip">✓ Pektyny pieczonego jabłka działają jak „gąbka" na cholesterol</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Gulasz wołowy z warzywami</div>
+        <div class="meal-desc">Chuda wołowina (udziec) ~180g duszona z cebulą, marchewką, papryką i passatą pomidorową · kasza gryczana · surówka z białej kapusty</div>
+        <span class="meal-tip">✓ Chuda wołowina — wybieraj udziec, unikaj karkówki</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🍎</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Jabłko + migdały</div>
+        <div class="meal-desc">Duże jabłko + 15 migdałów</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Owsianka wieczorna na zimno</div>
+        <div class="meal-desc">Płatki owsiane (5 łyżek) namoczone w mleku kozim od wieczora, jabłko starte, cynamon, orzechy. Gotowe rano lub jako lekka kolacja</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 5 -->
+<div class="day-panel" id="day-4">
+  <div class="day-header">Piątek</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Owsianka bananowa</div>
+        <div class="meal-desc">Płatki owsiane (6 łyżek) na mleku kozim, banan pokrojony, cynamon, łyżeczka miodu, orzechy włoskie lub migdały</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🧀</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Serek kozi z warzywami</div>
+        <div class="meal-desc">Serek kozi twarogowy 50g · ogórek, pomidor, rzodkiewki · chleb gryczany (1 kromka)</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Pierś z kurczaka w sosie pomidorowym</div>
+        <div class="meal-desc">Pierś z kurczaka ~200g duszona w passacie pomidorowej z czosnkiem, cebulą i bazylią · ryż brązowy (3/4 szklanki) · sałatka z ogórka z koperkiem i oliwą</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🥛</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Jogurt kozi z jabłkiem</div>
+        <div class="meal-desc">150g jogurtu koziego + jabłko + garść orzechów</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Jajka gotowane z warzywami</div>
+        <div class="meal-desc">2 jajka gotowane na twardo · chleb gryczany (2 kromki) · pomidory, ogórek, papryka · skropione oliwą z oliwek</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 6 -->
+<div class="day-panel" id="day-5">
+  <div class="day-header">Sobota</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Kasza jaglana z miodem i cynamonem</div>
+        <div class="meal-desc">Kasza jaglana gotowana na mleku kozim, pokrojone jabłko, miód, cynamon, łyżka masła migdałowego</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🥤</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Koktajl zielony</div>
+        <div class="meal-desc">150g jogurtu koziego + garść szpinaku + jabłko + banan + 100ml wody · zblendowane</div>
+        <span class="meal-tip">✓ Szpinak bogaty w sterole roślinne obniżające LDL</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Indyk pieczony z kaszą i kapustą</div>
+        <div class="meal-desc">Filet z indyka ~200g pieczony w ziołach (rozmaryn, tymianek) · kasza pęczak · kapusta kiszona duszona z cebulą i oliwą (kiszonki wspierają mikrobiotę)</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🍎</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Jabłko + orzechy</div>
+        <div class="meal-desc">Jabłko + 30g orzechów włoskich lub migdałów</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Sałatka z jajkiem i warzywami</div>
+        <div class="meal-desc">Sałata, pomidor, ogórek, papryka, 2 jajka gotowane na twardo pokrojone · oliwa + sok z cytryny + sól + pieprz · chleb gryczany</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 7 -->
+<div class="day-panel" id="day-6">
+  <div class="day-header">Niedziela</div>
+  <div class="meals-grid">
+    <div class="meal-card">
+      <div class="meal-label sniad"><span class="icon">🌅</span>Śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Owsianka niedzielna z owocami</div>
+        <div class="meal-desc">Płatki owsiane górskie (7 łyżek) na mleku kozim, jabłko starte, orzechy włoskie, łyżka miodu, cynamon · większa porcja na dłuższy weekend</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label ii-sniad"><span class="icon">🥦</span>II śniadanie</div>
+      <div class="meal-body">
+        <div class="meal-name">Warzywa z hummusem</div>
+        <div class="meal-desc">Marchewka, seler naciowy, ogórek · 3 łyżki hummusu · jabłko</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label obiad"><span class="icon">🍽️</span>Obiad</div>
+      <div class="meal-body">
+        <div class="meal-name">Polędwica wołowa pieczona z warzywami</div>
+        <div class="meal-desc">Polędwica lub chuda wołowina ~180g pieczona w oliwie z ziołami · kasza gryczana · marchewka z zielonym groszkiem · surówka z buraczków</div>
+        <span class="meal-tip">✓ Polędwica = najmniej tłuszczu spośród wołowiny</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label podwiecz"><span class="icon">🧀</span>Podwieczorek</div>
+      <div class="meal-body">
+        <div class="meal-name">Serek kozi z jabłkiem</div>
+        <div class="meal-desc">50g serka koziego + jabłko + łyżeczka miodu</div>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-label kolacja"><span class="icon">🌙</span>Kolacja</div>
+      <div class="meal-body">
+        <div class="meal-name">Zupa krem z dyni lub batatów</div>
+        <div class="meal-desc">Dynia lub batat ugotowane z cebulą i czosnkiem, zblendowane · pestki dyni na wierzchu · chleb gryczany · łyżka jogurtu koziego</div>
+        <span class="meal-tip">✓ Karotenoidy z dyni działają przeciwzapalnie</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHOPPING LIST -->
+<div class="day-panel" id="day-7">
+  <div class="day-header">🛒 Lista zakupów na 7 dni</div>
+
+  <div class="notes-box">
+    <h3>📌 Wskazówki zakupowe</h3>
+    <ul>
+      <li>Mięso najlepiej kupować świeże 2× w tygodniu — na poniedziałek–środę i czwartek–niedzielę</li>
+      <li>Wybieraj chude kawałki wołowiny: <strong>udziec, polędwica</strong> — unikaj karkówki i żeberek</li>
+      <li>Oliwa z oliwek — wybieraj <strong>extra virgin (EVOO)</strong> w ciemnej butelce</li>
+      <li>Chleb gryczany — sprawdź skład, powinien być bez mąki pszennej</li>
+    </ul>
+  </div>
+
+  <div class="shop-grid" id="shopGrid">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+function showDay(n, btn) {
+  document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('day-' + n).classList.add('active');
+  btn.classList.add('active');
+}
+
+const shopData = [
+  {
+    name: 'Mięso i jajka', icon: '🥩',
+    items: [
+      ['Pierś z kurczaka', '600 g'],
+      ['Indyk — filet lub udziec', '700 g'],
+      ['Wołowina chuda (udziec/polędwica)', '400 g'],
+      ['Wątróbka drobiowa', '180 g'],
+      ['Jajka', '14 szt.'],
+    ]
+  },
+  {
+    name: 'Nabiał kozi', icon: '🐐',
+    items: [
+      ['Mleko kozie', '2 l'],
+      ['Jogurt kozi naturalny', '5 szt. (150g)'],
+      ['Serek kozi twarogowy', '250 g'],
+    ]
+  },
+  {
+    name: 'Kasze i zboża', icon: '🌾',
+    items: [
+      ['Płatki owsiane górskie', '600 g'],
+      ['Kasza gryczana', '500 g'],
+      ['Kasza jaglana', '400 g'],
+      ['Kasza pęczak', '300 g'],
+      ['Ryż brązowy', '300 g'],
+      ['Chleb gryczany (bezpszenny)', '2 bochenki'],
+    ]
+  },
+  {
+    name: 'Warzywa', icon: '🥦',
+    items: [
+      ['Marchew', '1 kg'],
+      ['Brokuły', '1 szt.'],
+      ['Papryka czerwona', '4 szt.'],
+      ['Pomidory', '1 kg'],
+      ['Ogórki', '5 szt.'],
+      ['Cukinia', '1 szt.'],
+      ['Cebula', '6 szt.'],
+      ['Czosnek', '1 główka'],
+      ['Sałata masłowa', '2 główki'],
+      ['Szpinak świeży', '100 g'],
+      ['Buraki', '4 szt.'],
+      ['Pietruszka (korzeń + nać)', '3 szt.'],
+      ['Seler naciowy lub korzeń', '1 szt.'],
+      ['Ziemniaki', '0,5 kg'],
+      ['Dynia lub batat', '500 g'],
+      ['Kapusta kiszona', '350 g'],
+      ['Rzodkiewki', '1 pęczek'],
+      ['Szczypiorek', '1 pęczek'],
+      ['Zielony groszek (mrożony)', '200 g'],
+    ]
+  },
+  {
+    name: 'Owoce', icon: '🍎',
+    items: [
+      ['Jabłka (duże, twarde)', '2,5 kg'],
+      ['Banany', '4 szt.'],
+      ['Gruszki', '2 szt.'],
+      ['Cytryna', '2 szt.'],
+    ]
+  },
+  {
+    name: 'Oleje i tłuszcze', icon: '🫙',
+    items: [
+      ['Oliwa extra virgin', '500 ml'],
+      ['Masło migdałowe / migdały', '1 słoik / 200 g'],
+    ]
+  },
+  {
+    name: 'Orzechy i nasiona', icon: '🌰',
+    items: [
+      ['Orzechy włoskie', '200 g'],
+      ['Pestki dyni', '150 g'],
+    ]
+  },
+  {
+    name: 'Przetwory i inne', icon: '🥫',
+    items: [
+      ['Passata pomidorowa', '2 butelki (500ml)'],
+      ['Hummus (gotowy)', '1 op. 200g'],
+      ['Bulion warzywny (kostki lub płyn)', '1 op.'],
+      ['Miód (najlepiej gryczany)', '1 słoik'],
+    ]
+  },
+  {
+    name: 'Przyprawy', icon: '🌿',
+    items: [
+      ['Cynamon mielony', '1 op.'],
+      ['Rozmaryn suszony', '1 op.'],
+      ['Tymianek suszony', '1 op.'],
+      ['Kurkuma', '1 op.'],
+      ['Bazylia suszona', '1 op.'],
+      ['Pieprz czarny', '—'],
+      ['Sól morska lub himalajska', '—'],
+    ]
+  },
+];
+
+function renderShop() {
+  const grid = document.getElementById('shopGrid');
+  shopData.forEach((cat, ci) => {
+    const div = document.createElement('div');
+    div.className = 'shop-cat';
+    div.innerHTML = `<div class="shop-cat-head"><span class="ico">${cat.icon}</span>${cat.name}</div><div class="shop-items" id="cat-${ci}"></div>`;
+    grid.appendChild(div);
+    const list = div.querySelector(`#cat-${ci}`);
+    cat.items.forEach((item, ii) => {
+      const id = `item-${ci}-${ii}`;
+      const row = document.createElement('div');
+      row.className = 'shop-item';
+      row.innerHTML = `<input type="checkbox" id="${id}"><label for="${id}">${item[0]}</label><span class="qty">${item[1]}</span>`;
+      row.querySelector('input').addEventListener('change', function() {
+        row.querySelector('label').classList.toggle('checked', this.checked);
+      });
+      list.appendChild(row);
+    });
+  });
+}
+renderShop();
+</script>
+</body>
+</html>
