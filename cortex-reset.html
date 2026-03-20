@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korteks Reset</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Playfair+Display:ital,wght@1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FDF6EE;
+    --peach: #F2C4A0;
+    --peach-deep: #E8A87C;
+    --sage: #9DB89A;
+    --sage-light: #C8DDC6;
+    --warm-brown: #7A5C4A;
+    --text: #3D2B1F;
+    --text-light: #8A7060;
+    --white: #FFFDF9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  /* Animated background blobs */
+  .bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.35;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .blob-1 { width: 400px; height: 400px; background: var(--peach); top: -100px; left: -100px; animation-delay: 0s; }
+  .blob-2 { width: 300px; height: 300px; background: var(--sage-light); bottom: -80px; right: -60px; animation-delay: -4s; }
+  .blob-3 { width: 250px; height: 250px; background: #F7D9C4; top: 50%; left: 60%; animation-delay: -8s; }
+
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(30px, 20px) scale(1.08); }
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 420px;
+  }
+
+  /* ── WELCOME SCREEN ── */
+  .screen { display: none; animation: fadeUp 0.6s ease both; }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 32px;
+    padding: 40px 36px;
+    box-shadow: 0 8px 40px rgba(122,92,74,0.12);
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--sage-light);
+    color: var(--warm-brown);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-style: italic;
+    color: var(--warm-brown);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: var(--text-light);
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .duration-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-light);
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--peach-deep); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--peach-deep), #D4835A);
+    border: none; border-radius: 20px;
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 6px 20px rgba(232,168,124,0.45);
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(232,168,124,0.5); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+  .progress-pip {
+    flex: 1; height: 5px; border-radius: 10px;
+    background: #EDE5DC;
+    transition: background 0.4s;
+  }
+  .progress-pip.done { background: var(--sage); }
+  .progress-pip.current { background: var(--peach-deep); }
+
+  /* ── EXERCISE SCREEN ── */
+  .ex-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+  .ex-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 26px;
+    color: var(--warm-brown);
+    margin-bottom: 20px;
+    line-height: 1.25;
+  }
+
+  /* Central animation area */
+  .anim-zone {
+    width: 200px; height: 200px;
+    margin: 0 auto 24px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Pulsing ring */
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid var(--peach);
+    animation: ringPulse 2s ease-in-out infinite;
+  }
+  .ring-1 { width: 200px; height: 200px; animation-delay: 0s; }
+  .ring-2 { width: 160px; height: 160px; animation-delay: 0.4s; border-color: var(--sage-light); }
+  @keyframes ringPulse {
+    0%,100% { transform: scale(1); opacity: 0.6; }
+    50%      { transform: scale(1.06); opacity: 1; }
+  }
+
+  .hand-icon {
+    font-size: 64px;
+    z-index: 2;
+    animation: gentleFloat 3s ease-in-out infinite;
+    user-select: none;
+  }
+  @keyframes gentleFloat {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  /* Step dots / finger sequence */
+  .finger-track {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .finger-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #EDE5DC;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-light);
+    transition: all 0.3s;
+  }
+  .finger-dot.active {
+    background: var(--peach-deep);
+    color: white;
+    transform: scale(1.2);
+    box-shadow: 0 4px 14px rgba(232,168,124,0.5);
+  }
+  .finger-dot.done {
+    background: var(--sage);
+    color: white;
+  }
+
+  /* Instruction box */
+  .instruction-box {
+    background: linear-gradient(135deg, #FFF7F0, #F5EDE4);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--peach-deep);
+  }
+  .instruction-box p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .instruction-step {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--warm-brown);
+    margin-bottom: 6px;
+  }
+
+  /* Timer ring */
+  .timer-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; margin-bottom: 24px;
+  }
+  .timer-svg { transform: rotate(-90deg); }
+  .timer-bg { fill: none; stroke: #EDE5DC; stroke-width: 6; }
+  .timer-fg { fill: none; stroke: var(--peach-deep); stroke-width: 6; stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear; }
+  .timer-num {
+    position: absolute;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--warm-brown);
+  }
+  .timer-container { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* ── BREATH SCREEN ── */
+  .breath-circle {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #F5EDE4, var(--peach));
+    margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 30px rgba(232,168,124,0.35);
+    transition: transform 4s ease-in-out;
+  }
+  .breath-circle.expand { transform: scale(1.35); }
+  .breath-circle.contract { transform: scale(1); }
+  .breath-label {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--warm-brown);
+    margin-bottom: 8px;
+  }
+  .breath-sub {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  /* ── COMPLETE SCREEN ── */
+  .celebrate {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .celebrate-emoji {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 16px;
+    animation: bounceIn 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+  @keyframes bounceIn {
+    0%   { transform: scale(0) rotate(-10deg); }
+    60%  { transform: scale(1.15) rotate(3deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .celebrate h2 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--warm-brown);
+    margin-bottom: 12px;
+  }
+  .celebrate p {
+    color: var(--text-light);
+    line-height: 1.6;
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+
+  .btn-secondary {
+    width: 100%; padding: 16px;
+    background: transparent;
+    border: 2px solid var(--peach-deep);
+    border-radius: 20px;
+    color: var(--peach-deep);
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    background: var(--peach-deep);
+    color: white;
+  }
+
+  .footer-link {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--text-light);
+  }
+  .footer-link a {
+    color: var(--warm-brown);
+    text-decoration: none;
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--peach);
+    padding-bottom: 1px;
+    transition: border-color 0.2s;
+  }
+  .footer-link a:hover { border-color: var(--peach-deep); }
+
+  /* Feeling scale */
+  .feeling-row {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 28px;
+  }
+  .feel-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 2px solid #EDE5DC;
+    background: white;
+    font-size: 20px; cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feel-btn:hover, .feel-btn.selected {
+    border-color: var(--sage);
+    background: var(--sage-light);
+    transform: scale(1.15);
+  }
+  .feeling-label {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-light);
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<div class="app">
+
+  <!-- WELCOME -->
+  <div class="screen active card" id="screen-welcome">
+    <div class="tag">Protokół · 5 ćwiczeń</div>
+    <h1>Wróć do siebie</h1>
+    <p style="font-weight:700; color: var(--warm-brown); font-size:12px; letter-spacing:1px; margin-bottom:14px; text-transform: uppercase;">Protokół regulacji kory mózgowej</p>
+    <p class="subtitle">Kiedy jesteś zestresowany, mózg przełącza się w tryb alarmowy — zaczynasz reagować automatycznie, trudniej myśleć jasno. To nie twoja wina, to biologia.<br><br>Te proste ćwiczenia rąk pomagają mózgowi <strong>wrócić do równowagi</strong> — nie chodzi o samo wyciszenie ani o „nakręcenie się", ale o <strong>regulację</strong>: drobne, świadome ruchy wysyłają sygnał, że jesteś bezpieczny i możesz znów myśleć spokojnie.</p>
+    <div class="duration-row">
+      <div class="dot"></div> ok. 8–10 minut
+      <div class="dot"></div> cisza lub spokojne miejsce
+    </div>
+    <button class="btn-primary" onclick="startProtocol()">Zaczynam ✦</button>
+    <div class="footer-link">stworzone przez <a href="https://www.fizjomania-jaroslaw.pl" target="_blank">fizjomania-jaroslaw.pl</a></div>
+  </div>
+
+  <!-- EXERCISE -->
+  <div class="screen card" id="screen-exercise">
+    <div class="progress-wrap" id="progress-bar"></div>
+    <div class="ex-label" id="ex-label">Ćwiczenie 1 z 5</div>
+    <div class="ex-title" id="ex-title"></div>
+
+    <div class="anim-zone">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="hand-icon" id="hand-icon">🤲</div>
+    </div>
+
+    <div class="finger-track" id="finger-track"></div>
+
+    <div class="instruction-box">
+      <div class="instruction-step" id="step-label"></div>
+      <p id="instruction-text"></p>
+    </div>
+
+    <div class="timer-wrap" id="timer-wrap">
+      <div class="timer-container">
+        <svg class="timer-svg" width="80" height="80">
+          <circle class="timer-bg" cx="40" cy="40" r="34"/>
+          <circle class="timer-fg" id="timer-circle" cx="40" cy="40" r="34"
+            stroke-dasharray="213.6" stroke-dashoffset="0"/>
+        </svg>
+        <span class="timer-num" id="timer-num">—</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-next" onclick="nextStep()">Pomiń →</button>
+  </div>
+
+  <!-- BREATH PAUSE -->
+  <div class="screen card" id="screen-breath">
+    <div class="tag">Pauza · Oddech</div>
+    <h1 style="font-size:24px; margin-bottom:20px;">Oddechnij chwilę</h1>
+    <div class="breath-circle" id="breath-circle">
+      <span style="font-size:36px">🌿</span>
+    </div>
+    <div class="breath-label" id="breath-action">Wdech...</div>
+    <div class="breath-sub" id="breath-count">4 sekundy</div>
+    <button class="btn-primary" id="btn-breath-skip" onclick="skipBreath()">Pomiń pauzę</button>
+  </div>
+
+  <!-- COMPLETE -->
+  <div class="screen card" id="screen-complete">
+    <div class="celebrate">
+      <span class="celebrate-emoji">🌸</span>
+      <h2>Protokół ukończony</h2>
+      <p>Twoja kora mózgowa dostała sygnał bezpieczeństwa. Zostań chwilę z tym spokojnym uczuciem.</p>
+      <div class="feeling-label">Jak się teraz czujesz?</div>
+      <div class="feeling-row">
+        <button class="feel-btn" onclick="selectFeel(this)">😞</button>
+        <button class="feel-btn" onclick="selectFeel(this)">😕</button>
+        <button class="feel-btn" onclick="selectFeel(this)">😐</button>
+        <button class="feel-btn" onclick="selectFeel(this)">🙂</button>
+        <button class="feel-btn" onclick="selectFeel(this)">😌</button>
+      </div>
+      <button class="btn-primary" onclick="restartProtocol()">Powtórz protokół</button>
+      <button class="btn-secondary" onclick="goHome()">Powrót do początku</button>
+      <div class="footer-link">fizjomania-jaroslaw.pl</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────
+const exercises = [
+  {
+    id: 1,
+    title: "Kciuk do każdego palca",
+    icon: "👋",
+    steps: [
+      { label: "Krok 1", text: "Weź obie dłonie przed siebie. Zacznij od prawej ręki: dotkij kciukiem wskazującego, środkowego, serdecznego, małego — powoli i świadomie.", duration: 20 },
+      { label: "Krok 2", text: "Teraz lewa ręka: wskazujący → środkowy → serdeczny → mały. Jeden palec = jeden spokojny oddech.", duration: 20 },
+      { label: "Krok 3", text: "Obie ręce razem, synchronicznie. Poczuj każdy opuszek. 3 pełne rundy.", duration: 25 }
+    ],
+    fingers: ["☝️","🖕","💍","🤙"]
+  },
+  {
+    id: 2,
+    title: "Krzyżowe dotykanie ramion",
+    icon: "🤗",
+    steps: [
+      { label: "Przygotuj się", text: "Siedź prosto lub stań wygodnie. Skrzyżuj ramiona na piersi — prawa ręka na lewym ramieniu, lewa na prawym.", duration: 10 },
+      { label: "Rytm", text: "Naprzemiennie: prawa ręka stuka w lewe ramię, lewa stuka w prawe. Delikatnie, jak tapping. Wolny rytm — raz na 2 sekundy.", duration: 30 },
+      { label: "Finisz", text: "Teraz zwolnij. Tylko delikatne trzymanie — poczuj ciepło dłoni na ramionach. Zostań tak 10 sekund.", duration: 15 }
+    ],
+    fingers: []
+  },
+  {
+    id: 3,
+    title: "Pocieranie opuszków palców",
+    icon: "✋",
+    steps: [
+      { label: "Start", text: "Złącz opuszki wszystkich palców obu dłoni razem — jak namiot. Zacznij powoli pocierać każdą parę: kciuk-kciuk, wskazujący-wskazujący...", duration: 20 },
+      { label: "Głębiej", text: "Teraz pocieraj opuszki w małych kółkach. Skup się na fakturze — co czujesz pod palcami? To aktywuje korę somatosensoryczną.", duration: 25 },
+      { label: "Wycisz", text: "Zatrzymaj dłonie. Połóż je na udach — wewnętrzną stroną do góry. Poczuj ciepło i mrowienie przez 10 sekund.", duration: 15 }
+    ],
+    fingers: []
+  },
+  {
+    id: 4,
+    title: "Naprzemienne zaciskanie dłoni",
+    icon: "✊",
+    steps: [
+      { label: "Rytm naprzemienny", text: "Prawa dłoń zaciśnięta w pięść → lewa otwarta. Potem zamień: prawa otwarta → lewa zaciśnięta. Wolno, 1 raz na 2 sekundy.", duration: 25 },
+      { label: "Zwiększ świadomość", text: "To samo, ale obserwuj napięcie: czujesz różnicę między dłonią zamkniętą a otwartą? Skup się na tej różnicy.", duration: 25 },
+      { label: "Zatrzymaj się", text: "Obie dłonie otwarte, na kolanach. Oddech. Poczuj jak napięcie odpływa z dłoni.", duration: 15 }
+    ],
+    fingers: []
+  },
+  {
+    id: 5,
+    title: "Masaż dłoni punkt po punkcie",
+    icon: "🙌",
+    steps: [
+      { label: "Punkt 1 — kciuk", text: "Lewą dłonią powoli naciśnij kciuk prawej: podstawa, środek, opuszek. Trzy punkty, trzy sekundy każdy.", duration: 20 },
+      { label: "Punkt 2 — mięsień kłębu", text: "Znajdź miękki mięsień u podstawy kciuka (kłąb kciuka). Naciśnij kciukiem lewej dłoni — delikatnie, okrężnie.", duration: 20 },
+      { label: "Zamień ręce", text: "Teraz prawa dłoń masuje lewą: kciuk → kłąb kciuka → każdy palec po kolei. Twoje tempo, twój oddech.", duration: 25 }
+    ],
+    fingers: []
+  }
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let currentExercise = 0;
+let currentStep = 0;
+let timerInterval = null;
+let timerSeconds = 0;
+let breathInterval = null;
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  const el = document.getElementById(id);
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = '';
+  el.classList.add('active');
+}
+
+function buildProgress() {
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = '';
+  for (let i = 0; i < exercises.length; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'progress-pip';
+    if (i < currentExercise) pip.classList.add('done');
+    else if (i === currentExercise) pip.classList.add('current');
+    bar.appendChild(pip);
+  }
+}
+
+function buildFingerTrack(ex) {
+  const track = document.getElementById('finger-track');
+  track.innerHTML = '';
+  if (ex.fingers && ex.fingers.length > 0) {
+    ex.fingers.forEach((f, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'finger-dot';
+      dot.id = `fdot-${i}`;
+      dot.textContent = f;
+      track.appendChild(dot);
+    });
+  }
+}
+
+function animateFingerTrack(stepIndex) {
+  document.querySelectorAll('.finger-dot').forEach((d, i) => {
+    d.classList.remove('active', 'done');
+    if (i < stepIndex) d.classList.add('done');
+    if (i === stepIndex) d.classList.add('active');
+  });
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────
+function startTimer(seconds) {
+  clearInterval(timerInterval);
+  timerSeconds = seconds;
+  const circle = document.getElementById('timer-circle');
+  const num = document.getElementById('timer-num');
+  const total = 213.6;
+  num.textContent = seconds;
+  circle.style.strokeDashoffset = 0;
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    num.textContent = timerSeconds;
+    const offset = total * (1 - timerSeconds / seconds);
+    circle.style.strokeDashoffset = offset;
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      num.textContent = '✓';
+      circle.style.stroke = 'var(--sage)';
+      setTimeout(() => { nextStep(); }, 1500);
+    }
+  }, 1000);
+}
+
+// ── BREATH PAUSE ──────────────────────────────────────────────────────
+function showBreath(callback) {
+  showScreen('screen-breath');
+  const circle = document.getElementById('breath-circle');
+  const action = document.getElementById('breath-action');
+  const count  = document.getElementById('breath-count');
+  let phase = 0;
+  const phases = [
+    { label: 'Wdech...', sec: 4, expand: true },
+    { label: 'Zatrzymaj', sec: 4, expand: true },
+    { label: 'Wydech...', sec: 6, expand: false },
+    { label: 'Pauza...', sec: 2, expand: false }
+  ];
+  let rounds = 0;
+  let phaseTimer;
+
+  function runPhase() {
+    const p = phases[phase];
+    action.textContent = p.label;
+    count.textContent = p.sec + ' sekund';
+    circle.classList.remove('expand', 'contract');
+    void circle.offsetWidth;
+    circle.classList.add(p.expand ? 'expand' : 'contract');
+
+    phaseTimer = setTimeout(() => {
+      phase++;
+      if (phase >= phases.length) {
+        phase = 0;
+        rounds++;
+        if (rounds >= 2) {
+          clearTimeout(phaseTimer);
+          callback();
+          return;
+        }
+      }
+      runPhase();
+    }, p.sec * 1000);
+  }
+
+  window._breathCallback = callback;
+  window._breathPhaseTimer = phaseTimer;
+  runPhase();
+}
+
+function skipBreath() {
+  clearTimeout(window._breathPhaseTimer);
+  if (window._breathCallback) window._breathCallback();
+}
+
+// ── EXERCISE FLOW ─────────────────────────────────────────────────────
+function renderExercise() {
+  stepLocked = false;
+  const ex = exercises[currentExercise];
+  const step = ex.steps[currentStep];
+
+  buildProgress();
+  buildFingerTrack(ex);
+
+  document.getElementById('ex-label').textContent = `Ćwiczenie ${currentExercise + 1} z ${exercises.length}`;
+  document.getElementById('ex-title').textContent = ex.title;
+  document.getElementById('hand-icon').textContent = ex.icon;
+  document.getElementById('step-label').textContent = step.label;
+  document.getElementById('instruction-text').textContent = step.text;
+
+  if (ex.fingers && ex.fingers.length > 0) {
+    animateFingerTrack(currentStep < ex.fingers.length ? currentStep : ex.fingers.length - 1);
+  }
+
+  const isLast = currentStep === ex.steps.length - 1 && currentExercise === exercises.length - 1;
+  const btn = document.getElementById('btn-next');
+  btn.textContent = isLast ? 'Ukończ protokół ✦' : 'Pomiń →';
+
+  startTimer(step.duration);
+}
+
+let stepLocked = false;
+
+function nextStep() {
+  if (stepLocked) return;
+  stepLocked = true;
+  clearInterval(timerInterval);
+  const ex = exercises[currentExercise];
+
+  if (currentStep < ex.steps.length - 1) {
+    currentStep++;
+    renderExercise();
+  } else {
+    // End of exercise
+    if (currentExercise < exercises.length - 1) {
+      const nextEx = currentExercise + 1;
+      showBreath(() => {
+        currentExercise = nextEx;
+        currentStep = 0;
+        stepLocked = false;
+        showScreen('screen-exercise');
+        renderExercise();
+      });
+    } else {
+      showScreen('screen-complete');
+    }
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+function startProtocol() {
+  currentExercise = 0;
+  currentStep = 0;
+  showScreen('screen-exercise');
+  renderExercise();
+}
+
+function restartProtocol() {
+  startProtocol();
+}
+
+function goHome() {
+  showScreen('screen-welcome');
+}
+
+function selectFeel(btn) {
+  document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+</script>
+</body>
+</html>
