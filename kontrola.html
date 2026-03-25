@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KONTROLA – Wejścia Serwisowe</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1A1A2E;
+  --mist: #F0EEF8;
+  --violet: #6B5BCD;
+  --violet-soft: #9B8FE0;
+  --violet-pale: #D4CEF5;
+  --gold: #C9A96E;
+  --gold-light: #F0DFB8;
+  --sage: #7BAF8C;
+  --sage-light: #C4DEC9;
+  --white: #FAFAF8;
+  --text-muted: #7A7890;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--ink);
+  color: var(--white);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+.bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18; animation: orbFloat 16s ease-in-out infinite alternate; }
+.bg-orb-1 { width: 500px; height: 500px; background: var(--violet); top: -150px; right: -100px; }
+.bg-orb-2 { width: 350px; height: 350px; background: var(--gold); bottom: -100px; left: -80px; animation-delay: -6s; }
+.bg-orb-3 { width: 280px; height: 280px; background: var(--sage); top: 40%; left: 30%; animation-delay: -11s; }
+@keyframes orbFloat { from{transform:translate(0,0) scale(1)} to{transform:translate(20px,30px) scale(1.1)} }
+.bg::after {
+  content:''; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.app { position:relative; z-index:1; width:100%; max-width:460px; padding:20px 0; margin:auto; }
+
+.screen { display:none; }
+.screen.active { display:block; animation:fadeSlide 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+@keyframes fadeSlide { from{opacity:0;transform:translateY(20px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+.card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:28px; padding:40px 36px; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
+
+.badge { display:inline-flex; align-items:center; gap:7px; background:rgba(107,91,205,0.2); border:1px solid rgba(107,91,205,0.4); color:var(--violet-soft); font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; padding:6px 14px; border-radius:20px; margin-bottom:24px; }
+.badge-dot { width:6px; height:6px; border-radius:50%; background:var(--violet-soft); animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+
+.welcome-title { font-family:'Cormorant Garamond',serif; font-size:54px; font-weight:600; letter-spacing:-1px; line-height:1; margin-bottom:6px; background:linear-gradient(135deg,#fff 0%,var(--violet-pale) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.welcome-subtitle { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:20px; font-weight:300; color:var(--text-muted); margin-bottom:28px; }
+
+.intro-text { font-size:14px; line-height:1.75; color:rgba(255,255,255,0.65); margin-bottom:32px; padding:20px; background:rgba(255,255,255,0.04); border-radius:16px; border-left:3px solid var(--violet); }
+.intro-text strong { color:rgba(255,255,255,0.9); font-weight:600; }
+
+.modules-preview { display:flex; flex-direction:column; gap:10px; margin-bottom:32px; }
+.module-pill { display:flex; align-items:center; gap:14px; padding:14px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:14px; }
+.module-num { width:28px; height:28px; border-radius:50%; background:rgba(107,91,205,0.25); border:1px solid rgba(107,91,205,0.5); color:var(--violet-soft); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.module-pill-title { font-size:13px; font-weight:600; color:rgba(255,255,255,0.85); }
+.module-pill-sub { font-size:11px; color:var(--text-muted); margin-top:1px; }
+
+.meta-row { display:flex; gap:16px; margin-bottom:32px; }
+.meta-chip { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); }
+
+.btn-primary { width:100%; padding:18px; background:linear-gradient(135deg,var(--violet),#4A3BAA); border:none; border-radius:18px; color:white; font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 8px 30px rgba(107,91,205,0.4); letter-spacing:0.5px; }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 12px 40px rgba(107,91,205,0.5); }
+.btn-primary:active { transform:translateY(0); }
+.btn-ghost { width:100%; padding:14px; background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:18px; color:rgba(255,255,255,0.5); font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; margin-top:10px; transition:all 0.2s; }
+.btn-ghost:hover { border-color:rgba(255,255,255,0.25); color:rgba(255,255,255,0.8); }
+
+.progress-wrap { display:flex; gap:8px; margin-bottom:30px; }
+.pip { flex:1; height:4px; border-radius:10px; background:rgba(255,255,255,0.1); transition:background 0.5s; position:relative; overflow:hidden; }
+.pip.done { background:var(--sage); }
+.pip.active { background:rgba(107,91,205,0.3); }
+.pip.active::after { content:''; position:absolute; top:0; left:0; bottom:0; background:var(--violet-soft); animation:pipFill var(--pip-duration,30s) linear forwards; width:100%; transform-origin:left; transform:scaleX(0); }
+@keyframes pipFill { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+
+.ex-eyebrow { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+.ex-title { font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600; line-height:1.2; color:white; margin-bottom:6px; }
+.ex-why { font-size:12px; color:var(--text-muted); font-style:italic; margin-bottom:22px; line-height:1.5; }
+
+.visual-zone { width:100%; height:220px; margin-bottom:22px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+
+.step-box { background:rgba(107,91,205,0.12); border:1px solid rgba(107,91,205,0.25); border-radius:18px; padding:18px 20px; margin-bottom:18px; }
+.step-label { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--violet-soft); margin-bottom:6px; }
+.step-text { font-size:14px; line-height:1.7; color:rgba(255,255,255,0.82); }
+
+.timer-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.timer-container { position:relative; display:inline-flex; align-items:center; justify-content:center; }
+.timer-svg { transform:rotate(-90deg); }
+.timer-bg { fill:none; stroke:rgba(255,255,255,0.08); stroke-width:5; }
+.timer-fg { fill:none; stroke:var(--violet-soft); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+.timer-num { position:absolute; font-size:22px; font-weight:700; color:white; }
+.timer-label { font-size:12px; color:var(--text-muted); text-align:right; }
+.timer-label strong { display:block; font-size:18px; color:white; font-weight:700; }
+
+.breath-zone { text-align:center; padding:10px 0; }
+.breath-orb { width:150px; height:150px; border-radius:50%; background:radial-gradient(circle at 40% 35%,rgba(107,91,205,0.6),rgba(74,59,170,0.9)); margin:0 auto 24px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 60px rgba(107,91,205,0.4); transition:transform 4s ease-in-out; font-size:40px; }
+.breath-orb.expand { transform:scale(1.35); }
+.breath-orb.contract { transform:scale(1); }
+.breath-action { font-size:24px; font-weight:700; margin-bottom:6px; }
+.breath-count { color:var(--text-muted); font-size:14px; margin-bottom:28px; }
+
+.complete-zone { text-align:center; padding:10px 0; }
+.complete-icon { font-size:64px; display:block; margin-bottom:20px; animation:bounceIn 0.7s cubic-bezier(0.36,0.07,0.19,0.97) both; }
+@keyframes bounceIn { 0%{transform:scale(0) rotate(-10deg)} 60%{transform:scale(1.15) rotate(2deg)} 100%{transform:scale(1) rotate(0)} }
+.complete-title { font-family:'Cormorant Garamond',serif; font-size:36px; font-weight:600; margin-bottom:10px; }
+.complete-text { font-size:14px; color:rgba(255,255,255,0.6); line-height:1.7; margin-bottom:30px; }
+.feeling-label { font-size:12px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:14px; }
+.feeling-row { display:flex; gap:8px; justify-content:center; margin-bottom:28px; }
+.feel-btn { width:50px; height:50px; border-radius:50%; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); font-size:22px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+.feel-btn:hover, .feel-btn.selected { border-color:var(--violet); background:rgba(107,91,205,0.2); transform:scale(1.15); }
+.footer { text-align:center; margin-top:24px; font-size:12px; color:rgba(255,255,255,0.2); }
+.footer a { color:rgba(255,255,255,0.35); text-decoration:none; border-bottom:1px solid rgba(255,255,255,0.15); }
+.footer a:hover { color:rgba(255,255,255,0.6); }
+
+/* SVG animations */
+.eye-iris { animation:eyeBlink 4s ease-in-out infinite; transform-origin:115px 110px; }
+@keyframes eyeBlink { 0%,90%,100%{transform:scaleY(1)} 95%{transform:scaleY(0.05)} }
+.periph-ray { opacity:0; animation:rayAppear 3s ease-in-out infinite; }
+.periph-ray:nth-child(1){animation-delay:0s}
+.periph-ray:nth-child(2){animation-delay:0.4s}
+.periph-ray:nth-child(3){animation-delay:0.8s}
+.periph-ray:nth-child(4){animation-delay:0.2s}
+.periph-ray:nth-child(5){animation-delay:0.6s}
+.periph-ray:nth-child(6){animation-delay:1s}
+@keyframes rayAppear { 0%{opacity:0;transform:scaleX(0.2)} 40%{opacity:0.8} 80%{opacity:0.3;transform:scaleX(1)} 100%{opacity:0} }
+.gaze-ring { animation:gazeExpand 3s ease-in-out infinite; transform-origin:115px 110px; }
+@keyframes gazeExpand { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.6);opacity:0} }
+
+.cross-arm-r { animation:armSwingR 1.4s ease-in-out infinite; transform-origin:115px 88px; }
+.cross-arm-l { animation:armSwingL 1.4s ease-in-out infinite; transform-origin:115px 88px; }
+.cross-leg-r { animation:legSwingR 1.4s ease-in-out infinite; transform-origin:120px 150px; }
+.cross-leg-l { animation:legSwingL 1.4s ease-in-out infinite; transform-origin:110px 150px; }
+@keyframes armSwingR { 0%,100%{transform:rotate(-30deg)} 50%{transform:rotate(30deg)} }
+@keyframes armSwingL { 0%,100%{transform:rotate(30deg)} 50%{transform:rotate(-30deg)} }
+@keyframes legSwingR { 0%,100%{transform:rotate(-22deg)} 50%{transform:rotate(22deg)} }
+@keyframes legSwingL { 0%,100%{transform:rotate(22deg)} 50%{transform:rotate(-22deg)} }
+.cross-flash { animation:crossFlash 1.4s ease-in-out infinite; }
+@keyframes crossFlash { 0%,100%{opacity:0.1} 50%{opacity:0.7} }
+
+.heat-wave { animation:heatRise 2.5s ease-in-out infinite; }
+.heat-wave:nth-child(1){animation-delay:0s}
+.heat-wave:nth-child(2){animation-delay:0.7s}
+.heat-wave:nth-child(3){animation-delay:1.4s}
+@keyframes heatRise { 0%{opacity:0;transform:translateY(0)} 40%{opacity:0.7;transform:translateY(-14px)} 100%{opacity:0;transform:translateY(-32px)} }
+.glow-front { animation:glowPulse 2s ease-in-out infinite; }
+.glow-back  { animation:glowPulse 2s ease-in-out infinite 1s; }
+@keyframes glowPulse { 0%,100%{opacity:0.12} 50%{opacity:0.45} }
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<div class="app">
+
+  <!-- WELCOME -->
+  <div class="screen active card" id="screen-welcome">
+    <div class="badge"><div class="badge-dot"></div> Protokół · 3 techniki</div>
+    <div class="welcome-title">KONTROLA</div>
+    <div class="welcome-subtitle">Wejścia serwisowe do kory przedczołowej</div>
+    <div class="intro-text">
+      Kiedy stres przejmuje kontrolę, <strong>kora przedczołowa gaśnie</strong> — reagujesz automatycznie, trudniej myśleć jasno. To nie twoja wina, to biologia.<br><br>
+      Te 3 techniki to bezpośrednie wejścia serwisowe, które <strong>przywracają mózgowi równowagę</strong> — nie chodzi o samo wyciszenie ani nakręcenie, ale o <strong>regulację</strong>: powrót do trybu logicznego myślenia.
+    </div>
+    <div class="modules-preview">
+      <div class="module-pill">
+        <div class="module-num">1</div>
+        <div>
+          <div class="module-pill-title">Praca ze wzrokiem</div>
+          <div class="module-pill-sub">Peripheral Vision · ~1 min</div>
+        </div>
+      </div>
+      <div class="module-pill">
+        <div class="module-num">2</div>
+        <div>
+          <div class="module-pill-title">Ruchy naprzemienne</div>
+          <div class="module-pill-sub">Cross-Lateral Patterns · ~1 min</div>
+        </div>
+      </div>
+      <div class="module-pill">
+        <div class="module-num">3</div>
+        <div>
+          <div class="module-pill-title">Kotwica somatyczna</div>
+          <div class="module-pill-sub">Frontal-Occipital Hold · ~1 min</div>
+        </div>
+      </div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ok. 4–5 minut
+      </div>
+      <div class="meta-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        bez sprzętu
+      </div>
+      <div class="meta-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        auto-przejście
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startProtocol()">Uruchamiam protokół ✦</button>
+    <div class="footer">stworzone przez <a href="https://www.fizjomania-jaroslaw.pl" target="_blank">fizjomania-jaroslaw.pl</a></div>
+  </div>
+
+  <!-- EXERCISE -->
+  <div class="screen card" id="screen-exercise">
+    <div class="progress-wrap" id="progress-bar"></div>
+    <div class="ex-eyebrow" id="ex-eyebrow">Technika 1 z 3</div>
+    <div class="ex-title" id="ex-title"></div>
+    <div class="ex-why" id="ex-why"></div>
+    <div class="visual-zone" id="visual-zone"></div>
+    <div class="step-box">
+      <div class="step-label" id="step-label">Krok</div>
+      <div class="step-text" id="step-text"></div>
+    </div>
+    <div class="timer-row">
+      <div class="timer-container">
+        <svg class="timer-svg" width="72" height="72">
+          <circle class="timer-bg" cx="36" cy="36" r="30"/>
+          <circle class="timer-fg" id="timer-circle" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="0"/>
+        </svg>
+        <span class="timer-num" id="timer-num">—</span>
+      </div>
+      <div class="timer-label"><span id="timer-step-info"></span></div>
+    </div>
+    <button class="btn-primary" id="btn-next" onclick="nextStep()">Pomiń →</button>
+  </div>
+
+  <!-- BREATH -->
+  <div class="screen card" id="screen-breath">
+    <div class="badge" style="background:rgba(123,175,140,0.2);border-color:rgba(123,175,140,0.4);color:var(--sage-light)">
+      <div class="badge-dot" style="background:var(--sage)"></div> Pauza · Oddech
+    </div>
+    <div class="breath-zone">
+      <div class="breath-orb" id="breath-orb"><span>🌿</span></div>
+      <div class="breath-action" id="breath-action">Wdech...</div>
+      <div class="breath-count" id="breath-count">4 sekundy</div>
+      <button class="btn-primary" onclick="skipBreath()">Pomiń pauzę</button>
+    </div>
+  </div>
+
+  <!-- COMPLETE -->
+  <div class="screen card" id="screen-complete">
+    <div class="complete-zone">
+      <span class="complete-icon">🧠</span>
+      <div class="complete-title">Protokół ukończony</div>
+      <p class="complete-text">Twoja kora przedczołowa dostała sygnał powrotu do bazy. Zostań chwilę z tym uczuciem — pozwól mózgowi wrócić do trybu logicznego myślenia.</p>
+      <div class="feeling-label">Jak się teraz czujesz?</div>
+      <div class="feeling-row">
+        <button class="feel-btn" onclick="selectFeel(this)">😞</button>
+        <button class="feel-btn" onclick="selectFeel(this)">😕</button>
+        <button class="feel-btn" onclick="selectFeel(this)">😐</button>
+        <button class="feel-btn" onclick="selectFeel(this)">🙂</button>
+        <button class="feel-btn" onclick="selectFeel(this)">😌</button>
+      </div>
+      <button class="btn-primary" onclick="startProtocol()">Powtórz protokół</button>
+      <button class="btn-ghost" onclick="goHome()">Powrót do początku</button>
+      <div class="footer" style="margin-top:20px">fizjomania-jaroslaw.pl</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── SVG VISUALS ───────────────────────────────────────────────────────
+const visuals = {
+  vision: `<svg viewBox="0 0 230 220" width="230" height="220" xmlns="http://www.w3.org/2000/svg">
+    <ellipse class="gaze-ring" cx="115" cy="110" rx="46" ry="23" fill="none" stroke="rgba(107,91,205,0.5)" stroke-width="1.5"/>
+    <ellipse class="gaze-ring" cx="115" cy="110" rx="72" ry="36" fill="none" stroke="rgba(107,91,205,0.3)" stroke-width="1" style="animation-delay:-1.2s"/>
+    <g class="periph-ray"><line x1="63" y1="98" x2="18" y2="82" stroke="rgba(201,169,110,0.8)" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g class="periph-ray"><line x1="58" y1="110" x2="8" y2="110" stroke="rgba(201,169,110,0.8)" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g class="periph-ray"><line x1="63" y1="122" x2="18" y2="138" stroke="rgba(201,169,110,0.8)" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g class="periph-ray"><line x1="167" y1="98" x2="212" y2="82" stroke="rgba(201,169,110,0.8)" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g class="periph-ray"><line x1="172" y1="110" x2="222" y2="110" stroke="rgba(201,169,110,0.8)" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g class="periph-ray"><line x1="167" y1="122" x2="212" y2="138" stroke="rgba(201,169,110,0.8)" stroke-width="2.5" stroke-linecap="round"/></g>
+    <path d="M 58 110 Q 115 65 172 110 Q 115 155 58 110 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.65)" stroke-width="2.5"/>
+    <circle cx="115" cy="110" r="23" fill="rgba(107,91,205,0.75)" class="eye-iris"/>
+    <circle cx="115" cy="110" r="13" fill="rgba(15,10,50,0.95)"/>
+    <circle cx="122" cy="103" r="4.5" fill="rgba(255,255,255,0.75)"/>
+    <text x="115" y="188" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="Space Grotesk" letter-spacing="2.5">WIDZENIE PERYFERYJNE</text>
+  </svg>`,
+
+  cross: `<svg viewBox="0 0 230 220" width="230" height="220" xmlns="http://www.w3.org/2000/svg">
+    <line x1="115" y1="25" x2="115" y2="200" stroke="rgba(107,91,205,0.22)" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <circle cx="115" cy="50" r="19" fill="rgba(107,91,205,0.5)" stroke="rgba(155,143,224,0.8)" stroke-width="2"/>
+    <rect x="104" y="69" width="22" height="50" rx="8" fill="rgba(107,91,205,0.45)" stroke="rgba(155,143,224,0.7)" stroke-width="2"/>
+    <g class="cross-arm-r">
+      <line x1="115" y1="84" x2="158" y2="122" stroke="rgba(155,143,224,0.95)" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="158" cy="122" r="8" fill="rgba(201,169,110,0.85)"/>
+    </g>
+    <g class="cross-arm-l">
+      <line x1="115" y1="84" x2="72" y2="122" stroke="rgba(155,143,224,0.95)" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="72" cy="122" r="8" fill="rgba(201,169,110,0.85)"/>
+    </g>
+    <g class="cross-leg-r">
+      <line x1="122" y1="119" x2="148" y2="178" stroke="rgba(107,91,205,0.85)" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="148" cy="178" r="9" fill="rgba(107,91,205,0.6)" stroke="rgba(155,143,224,0.6)" stroke-width="1.5"/>
+    </g>
+    <g class="cross-leg-l">
+      <line x1="108" y1="119" x2="82" y2="178" stroke="rgba(107,91,205,0.85)" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="82" cy="178" r="9" fill="rgba(107,91,205,0.6)" stroke="rgba(155,143,224,0.6)" stroke-width="1.5"/>
+    </g>
+    <path d="M 72 122 Q 115 108 158 122" fill="none" stroke="rgba(201,169,110,0.55)" stroke-width="2" class="cross-flash" stroke-dasharray="5,4"/>
+    <text x="115" y="208" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="Space Grotesk" letter-spacing="2.5">LINIA ŚRODKOWA</text>
+  </svg>`,
+
+  hold: `<svg viewBox="0 0 230 220" width="230" height="220" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="115" cy="92" r="44" fill="rgba(123,175,140,0.12)" class="glow-back"/>
+    <circle cx="115" cy="78" r="31" fill="rgba(201,169,110,0.12)" class="glow-front"/>
+    <g class="heat-wave"><path d="M 101 54 Q 108 43 115 47 Q 122 43 129 54" fill="none" stroke="rgba(201,169,110,0.65)" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="heat-wave"><path d="M 105 48 Q 111 36 115 40 Q 119 36 125 48" fill="none" stroke="rgba(201,169,110,0.5)" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="heat-wave"><path d="M 109 43 Q 113 32 115 35 Q 117 32 121 43" fill="none" stroke="rgba(201,169,110,0.35)" stroke-width="2" stroke-linecap="round"/></g>
+    <circle cx="115" cy="92" r="40" fill="rgba(107,91,205,0.28)" stroke="rgba(155,143,224,0.65)" stroke-width="2"/>
+    <circle cx="105" cy="87" r="4" fill="rgba(255,255,255,0.6)"/>
+    <circle cx="125" cy="87" r="4" fill="rgba(255,255,255,0.6)"/>
+    <path d="M 107 102 Q 115 109 123 102" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round"/>
+    <rect x="109" y="131" width="12" height="13" rx="4" fill="rgba(107,91,205,0.3)" stroke="rgba(155,143,224,0.4)" stroke-width="1.5"/>
+    <rect x="96" y="144" width="38" height="18" rx="8" fill="rgba(107,91,205,0.22)" stroke="rgba(155,143,224,0.35)" stroke-width="1.5"/>
+    <path d="M 62 64 Q 70 56 80 61 L 99 63 Q 103 64 102 70 L 97 72 Q 101 74 100 79 L 93 80 Q 97 84 94 88 L 79 86 Q 68 80 62 64 Z" fill="rgba(201,169,110,0.5)" stroke="rgba(201,169,110,0.85)" stroke-width="1.5"/>
+    <path d="M 168 102 Q 160 94 150 99 L 132 101 Q 128 102 129 108 L 134 110 Q 130 112 131 117 L 138 118 Q 134 122 137 126 L 152 124 Q 162 118 168 102 Z" fill="rgba(123,175,140,0.42)" stroke="rgba(123,175,140,0.75)" stroke-width="1.5"/>
+    <text x="80" y="77" text-anchor="middle" fill="rgba(201,169,110,0.7)" font-size="9" font-family="Space Grotesk" font-weight="700">CZOŁO</text>
+    <text x="150" y="114" text-anchor="middle" fill="rgba(123,175,140,0.7)" font-size="9" font-family="Space Grotesk" font-weight="700">POTYLICA</text>
+    <text x="115" y="196" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="Space Grotesk" letter-spacing="2.5">KOTWICA SOMATYCZNA</text>
+  </svg>`
+};
+
+// ── DATA ──────────────────────────────────────────────────────────────
+const exercises = [
+  {
+    id: 1,
+    title: 'Praca ze wzrokiem',
+    why: 'Widzenie peryferyjne informuje mozg: nie gonią mnie drapieżniki — zdejmuje blokadę z kory przedczołowej.',
+    visual: 'vision',
+    steps: [
+      { label: 'Przygotuj się', text: 'Usiądź wygodnie. Skieruj wzrok na jeden punkt przed sobą — bez napinania oczu, miękko. Rozluźnij mięśnie twarzy i szczęki.', duration: 15 },
+      { label: 'Rozmiękczenie wzroku', text: 'Nie ruszając głową — spróbuj dostrzec to, co jest po Twojej prawej stronie. Teraz po lewej. Utrzymaj szerokie widzenie jednocześnie po obu stronach.', duration: 30 },
+      { label: 'Utrzymaj i oddech', text: 'Utrzymaj widzenie peryferyjne i weź powolny, głęboki oddech. Poczuj jak napięcie odpływa. Jeszcze 2 spokojne oddechy w tym stanie.', duration: 20 }
+    ]
+  },
+  {
+    id: 2,
+    title: 'Ruchy naprzemienne',
+    why: 'Ruchy przekraczające linię środkową ciała zmuszają obie półkule do intensywnej komunikacji — rozgrzewają korę przedczołową.',
+    visual: 'cross',
+    steps: [
+      { label: 'Marsz w miejscu', text: 'Wstań lub zostań w miejscu. Zacznij maszerować w miejscu — unoś kolana wyraźnie. Znajdź spokojny rytm: jedno kolano co 1–2 sekundy.', duration: 20 },
+      { label: 'Skrzyżowanie rąk', text: 'Dodaj ręce: prawą dłonią dotknij lewego kolana gdy je unosisz, lewą dłonią — prawego. Krzyżuj w środku. Powoli i świadomie — liczy się precyzja, nie prędkość.', duration: 35 },
+      { label: 'Zwolnij', text: 'Stopniowo zwalniaj ruch. Ostatnie 3 skrzyżowania — bardzo powoli, z pełną uwagą. Zatrzymaj się. Poczuj ciepło i spokój.', duration: 15 }
+    ]
+  },
+  {
+    id: 3,
+    title: 'Kotwica somatyczna',
+    why: 'Dotyk czoła i potylicy kieruje uwagę i przepływ krwi z powrotem do płatów czołowych — sygnał: wracamy do bazy.',
+    visual: 'hold',
+    steps: [
+      { label: 'Ułóż dłonie', text: 'Jedną dłoń połóż płasko na czole — tuż nad brwiami. Drugą — na potylicy (tył głowy, nad karkiem). Delikatny, pewny dotyk.', duration: 15 },
+      { label: 'Trzymaj i oddychaj', text: 'Zamknij oczy. Poczuj ciepło obu dłoni. Wyobraź sobie, że energia przepływa przez głowę — z przodu do tyłu i z powrotem. Powolne, głębokie oddechy.', duration: 40 },
+      { label: 'Wyjście', text: 'Bardzo powoli zdejmij dłonie — najpierw tylną, potem przednią. Zostań chwilę z zamkniętymi oczami. Otwórz je powoli.', duration: 15 }
+    ]
+  }
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let currentExercise = 0;
+let currentStep = 0;
+let timerInterval = null;
+let timerSeconds = 0;
+let autoAdvanceTimeout = null;
+let stepLocked = false;
+
+// ── BREATH ────────────────────────────────────────────────────────────
+let _breathPhaseTimer = null;
+let _breathCallback = null;
+let _breathDone = false;
+
+function showBreath(callback) {
+  clearTimeout(_breathPhaseTimer);
+  _breathDone = false;
+  _breathCallback = callback;
+  showScreen('screen-breath');
+  const orb = document.getElementById('breath-orb');
+  const action = document.getElementById('breath-action');
+  const count = document.getElementById('breath-count');
+  let phase = 0;
+  const phases = [
+    { label: 'Wdech...', sec: 4, expand: true },
+    { label: 'Zatrzymaj', sec: 4, expand: true },
+    { label: 'Wydech...', sec: 6, expand: false },
+    { label: 'Pauza...', sec: 2, expand: false }
+  ];
+  let rounds = 0;
+  function runPhase() {
+    if (_breathDone) return;
+    const p = phases[phase];
+    action.textContent = p.label;
+    count.textContent = p.sec + ' sekund';
+    orb.classList.remove('expand', 'contract');
+    void orb.offsetWidth;
+    orb.classList.add(p.expand ? 'expand' : 'contract');
+    _breathPhaseTimer = setTimeout(() => {
+      if (_breathDone) return;
+      phase++;
+      if (phase >= phases.length) { phase = 0; rounds++; if (rounds >= 2) { fireBreathCallback(); return; } }
+      runPhase();
+    }, p.sec * 1000);
+  }
+  runPhase();
+}
+function fireBreathCallback() {
+  if (_breathDone) return;
+  _breathDone = true;
+  clearTimeout(_breathPhaseTimer);
+  if (_breathCallback) { const cb = _breathCallback; _breathCallback = null; cb(); }
+}
+function skipBreath() { fireBreathCallback(); }
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+  el.classList.add('active');
+}
+
+function buildProgress() {
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = '';
+  const dur = exercises[currentExercise]?.steps[currentStep]?.duration || 30;
+  exercises.forEach((_, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'pip';
+    if (i < currentExercise) pip.classList.add('done');
+    else if (i === currentExercise) { pip.classList.add('active'); pip.style.setProperty('--pip-duration', dur + 's'); }
+    bar.appendChild(pip);
+  });
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────
+function startTimer(seconds) {
+  clearInterval(timerInterval);
+  clearTimeout(autoAdvanceTimeout);
+  timerSeconds = seconds;
+  const circle = document.getElementById('timer-circle');
+  const num = document.getElementById('timer-num');
+  const total = 188.5;
+  num.textContent = seconds;
+  circle.style.strokeDashoffset = 0;
+  circle.style.stroke = 'var(--violet-soft)';
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    num.textContent = timerSeconds;
+    circle.style.strokeDashoffset = total * (1 - timerSeconds / seconds);
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      num.textContent = '✓';
+      circle.style.stroke = 'var(--sage)';
+      autoAdvanceTimeout = setTimeout(() => nextStep(), 1500);
+    }
+  }, 1000);
+}
+
+// ── EXERCISE FLOW ─────────────────────────────────────────────────────
+function renderExercise() {
+  stepLocked = false;
+  const ex = exercises[currentExercise];
+  const step = ex.steps[currentStep];
+  document.getElementById('ex-eyebrow').textContent = `Technika ${currentExercise + 1} z ${exercises.length}`;
+  document.getElementById('ex-title').textContent = ex.title;
+  document.getElementById('ex-why').textContent = ex.why;
+  document.getElementById('step-label').textContent = step.label;
+  document.getElementById('step-text').textContent = step.text;
+  document.getElementById('timer-step-info').innerHTML = `Krok ${currentStep + 1} z ${ex.steps.length}<br><strong>${step.duration}s</strong>`;
+  document.getElementById('visual-zone').innerHTML = visuals[ex.visual];
+  const isLast = currentStep === ex.steps.length - 1 && currentExercise === exercises.length - 1;
+  document.getElementById('btn-next').textContent = isLast ? 'Ukończ protokół ✦' : 'Pomiń →';
+  buildProgress();
+  startTimer(step.duration);
+}
+
+function nextStep() {
+  if (stepLocked) return;
+  stepLocked = true;
+  clearInterval(timerInterval);
+  clearTimeout(autoAdvanceTimeout);
+  const ex = exercises[currentExercise];
+  if (currentStep < ex.steps.length - 1) {
+    currentStep++;
+    renderExercise();
+  } else {
+    if (currentExercise < exercises.length - 1) {
+      const nextEx = currentExercise + 1;
+      showBreath(() => { currentExercise = nextEx; currentStep = 0; stepLocked = false; showScreen('screen-exercise'); renderExercise(); });
+    } else {
+      showScreen('screen-complete');
+    }
+  }
+}
+
+function startProtocol() { currentExercise = 0; currentStep = 0; showScreen('screen-exercise'); renderExercise(); }
+function goHome() { showScreen('screen-welcome'); }
+function selectFeel(btn) { document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
+</script>
+</body>
+</html>
