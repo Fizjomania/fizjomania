@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>RAS Metronom – Fizjomania</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap');
+
+    :root {
+      --bg:      #070a10;
+      --panel:   #0d1117;
+      --border:  #1a2030;
+      --accent:  #00e5ff;
+      --green:   #00ff88;
+      --orange:  #ff8c00;
+      --red:     #ff3a3a;
+      --text:    #c0cce0;
+      --muted:   #3a4a5a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      height: 100vh; width: 100vw;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── PANEL ── */
+    #panel {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+    #logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px; letter-spacing: 3px;
+      color: var(--accent); white-space: nowrap;
+    }
+    .sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+    .lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; white-space: nowrap; }
+    .btn {
+      padding: 4px 11px; border-radius: 3px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: 'DM Mono', monospace;
+      font-size: 11px; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn:hover { border-color: #3a5a7a; color: var(--text); }
+    .btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
+    #brand { font-size: 10px; color: #1e2a3a; white-space: nowrap; margin-left: 4px; }
+    #playBtn {
+      margin-left: auto;
+      padding: 6px 22px; border-radius: 3px;
+      border: 1px solid var(--accent);
+      background: transparent; color: var(--accent);
+      cursor: pointer; font-family: 'DM Mono', monospace;
+      font-size: 13px; font-weight: 500; letter-spacing: 2px;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    #playBtn:hover, #playBtn.on { background: var(--accent); color: #000; }
+
+    /* ── MAIN ── */
+    #main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      overflow: hidden;
+    }
+
+    /* ── LEWA – WIZUALIZACJA ── */
+    #viz-area {
+      position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    /* Wielki wyświetlacz BPM */
+    #bpm-big {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 14vw, 160px);
+      line-height: 0.9;
+      color: var(--accent);
+      text-align: center;
+      position: relative;
+      z-index: 5;
+      transition: color 0.2s;
+      letter-spacing: 4px;
+    }
+    #bpm-big.pulse-flash { color: #fff; }
+    #bpm-unit {
+      font-size: 14px; color: var(--muted);
+      letter-spacing: 4px; text-align: center;
+      margin-top: -6px; margin-bottom: 20px;
+      z-index: 5; position: relative;
+    }
+
+    /* Pulsująca kula */
+    #pulse-ball {
+      position: relative; z-index: 5;
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #00e5ff44, #00e5ff11);
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 20px #00e5ff22;
+      transition: transform 0.05s, box-shadow 0.05s, background 0.05s;
+      margin-bottom: 20px;
+    }
+    #pulse-ball.beat {
+      transform: scale(1.35);
+      background: radial-gradient(circle at 35% 35%, #00e5ffaa, #00e5ff33);
+      box-shadow: 0 0 50px #00e5ff88, 0 0 100px #00e5ff33;
+    }
+
+    /* Canvas fali */
+    #wave-canvas {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 120px;
+      z-index: 2;
+    }
+
+    /* Pasek taktu na dole */
+    #beat-strip {
+      position: absolute;
+      bottom: 120px; left: 0; right: 0;
+      height: 3px;
+      background: var(--border);
+      z-index: 6;
+    }
+    #beat-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.05s linear;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* Faza/status */
+    #phase-badge {
+      position: absolute;
+      top: 16px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px; letter-spacing: 3px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 14px;
+      z-index: 10;
+      white-space: nowrap;
+      transition: color 0.3s, border-color 0.3s;
+    }
+
+    /* ── PRAWA – KONTROLKI ── */
+    #ctrl-area {
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+      gap: 0;
+    }
+
+    .ctrl-section {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 18px;
+    }
+    .ctrl-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px; letter-spacing: 2px;
+      color: var(--accent); margin-bottom: 12px;
+    }
+
+    /* SUWAK BPM */
+    #bpm-slider-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    #bpm-slider {
+      -webkit-appearance: none; appearance: none;
+      flex: 1; height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--green), var(--orange), var(--red));
+      outline: none; cursor: pointer;
+    }
+    #bpm-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 6px #ffffff88;
+      cursor: grab;
+    }
+    #bpm-slider-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px; color: var(--accent); min-width: 52px; text-align: right;
+    }
+    .bpm-range-labels {
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--muted); margin-top: 4px;
+    }
+
+    /* Preset BPM chodu */
+    .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .preset-btn {
+      padding: 4px 10px; border-radius: 3px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: 'DM Mono', monospace;
+      font-size: 11px; transition: all 0.15s;
+    }
+    .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* KALIBRACJA */
+    #calib-btn {
+      width: 100%; padding: 14px;
+      border-radius: 6px;
+      border: 2px dashed var(--muted);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: 'DM Mono', monospace;
+      font-size: 13px; letter-spacing: 1px;
+      transition: all 0.15s; text-align: center;
+    }
+    #calib-btn:hover, #calib-btn.active {
+      border-color: var(--green); color: var(--green);
+      background: #00ff8811;
+    }
+    #calib-btn.active { border-style: solid; }
+    #calib-taps {
+      display: flex; gap: 4px; flex-wrap: wrap;
+      margin-top: 10px; min-height: 22px;
+    }
+    .tap-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green);
+      animation: tapIn 0.2s ease;
+    }
+    @keyframes tapIn { from { transform: scale(0); } to { transform: scale(1); } }
+    #calib-result {
+      margin-top: 8px; font-size: 12px; color: var(--green);
+      min-height: 18px; letter-spacing: 1px;
+    }
+
+    /* PROGRESJA */
+    #prog-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .prog-row { display: flex; align-items: center; gap: 10px; }
+    .prog-lbl { font-size: 11px; color: var(--muted); min-width: 90px; }
+    .prog-input {
+      width: 60px; padding: 4px 8px;
+      background: var(--border); border: 1px solid #2a3a4a;
+      border-radius: 3px; color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 13px;
+    }
+    #prog-status {
+      font-size: 11px; color: var(--orange);
+      min-height: 16px; letter-spacing: 1px;
+    }
+    #prog-bar-wrap {
+      height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+    }
+    #prog-bar { height: 100%; background: var(--orange); width: 0%; transition: width 0.5s; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-card {
+      background: #0a0f18; border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 12px;
+    }
+    .stat-l { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .stat-v { font-size: 20px; font-weight: 500; color: var(--text); }
+
+    /* AKCENT */
+    .accent-row { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+    .accent-lbl { font-size: 11px; color: var(--muted); }
+    .accent-btn {
+      padding: 3px 10px; border-radius: 3px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px;
+      transition: all 0.15s;
+    }
+    .accent-btn.active { background: var(--orange); border-color: var(--orange); color: #000; }
+
+    /* Stopka */
+    #footer-bar {
+      height: 36px; background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 20px;
+      flex-shrink: 0;
+    }
+    .foot-item { font-size: 10px; color: var(--muted); }
+    .foot-item span { color: var(--text); }
+
+    .watermark {
+      position: fixed; bottom: 6px; right: 16px;
+      color: #ffffff08; font-size: 10px; letter-spacing: 1px;
+      user-select: none; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- PANEL -->
+<div id="panel">
+  <span id="logo">RAS / METRONOM</span>
+  <div class="sep"></div>
+  <span class="lbl">AKCENT</span>
+  <button class="btn accent-btn" data-acc="1" onclick="setAccent(1)">1/1</button>
+  <button class="btn accent-btn active" data-acc="2" onclick="setAccent(2)">1/2</button>
+  <button class="btn accent-btn" data-acc="4" onclick="setAccent(4)">1/4</button>
+  <div class="sep"></div>
+  <span class="lbl">GŁOŚNOŚĆ</span>
+  <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8"
+    style="width:70px;accent-color:var(--accent);"
+    oninput="volume=parseFloat(this.value)">
+  <span id="brand">Fizjomania – Anna Pietruch</span>
+  <button id="playBtn" onclick="togglePlay()">▶ START</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- WIZUALIZACJA -->
+  <div id="viz-area">
+    <div id="phase-badge">GOTOWY</div>
+    <div id="bpm-big">–</div>
+    <div id="bpm-unit">BPM</div>
+    <div id="pulse-ball"></div>
+    <div id="beat-strip"><div id="beat-fill"></div></div>
+    <canvas id="wave-canvas"></canvas>
+  </div>
+
+  <!-- KONTROLKI -->
+  <div id="ctrl-area">
+
+    <!-- BPM ręczny -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">⚙ USTAWIENIE BPM</div>
+      <div id="bpm-slider-wrap">
+        <input type="range" id="bpm-slider" min="40" max="160" value="80"
+          oninput="manualBpm(parseInt(this.value))">
+        <div id="bpm-slider-val">80</div>
+      </div>
+      <div class="bpm-range-labels"><span>40 – wolno</span><span>100 – norma</span><span>160 – szybko</span></div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="manualBpm(50)">50 – rehabilitacja</button>
+        <button class="preset-btn" onclick="manualBpm(60)">60 – wolny chód</button>
+        <button class="preset-btn" onclick="manualBpm(80)">80 – normalny</button>
+        <button class="preset-btn" onclick="manualBpm(100)">100 – energiczny</button>
+        <button class="preset-btn" onclick="manualBpm(110)">110 – szybki chód</button>
+      </div>
+    </div>
+
+    <!-- KALIBRACJA -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">👣 KALIBRACJA CHODU</div>
+      <button id="calib-btn" onclick="toggleCalib()">
+        KLIKNIJ W RYTM KROKÓW PACJENTA
+      </button>
+      <div id="calib-taps"></div>
+      <div id="calib-result"></div>
+    </div>
+
+    <!-- PROGRESJA -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">📈 AUTOMATYCZNA PROGRESJA</div>
+      <div id="prog-wrap">
+        <div class="prog-row">
+          <span class="prog-lbl">Start BPM</span>
+          <input class="prog-input" id="prog-start" type="number" value="70" min="40" max="160">
+        </div>
+        <div class="prog-row">
+          <span class="prog-lbl">Cel BPM</span>
+          <input class="prog-input" id="prog-target" type="number" value="90" min="40" max="160">
+        </div>
+        <div class="prog-row">
+          <span class="prog-lbl">Krok (BPM)</span>
+          <input class="prog-input" id="prog-step" type="number" value="2" min="1" max="10">
+        </div>
+        <div class="prog-row">
+          <span class="prog-lbl">Co (sek)</span>
+          <input class="prog-input" id="prog-interval" type="number" value="30" min="5" max="120">
+        </div>
+        <div class="prog-row">
+          <button class="btn active" id="prog-btn" onclick="toggleProgression()" style="font-size:11px;">
+            ▶ Włącz progresję
+          </button>
+          <span id="prog-status"></span>
+        </div>
+        <div id="prog-bar-wrap"><div id="prog-bar"></div></div>
+      </div>
+    </div>
+
+    <!-- STATYSTYKI -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">📊 SESJA</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-l">Aktualny BPM</div>
+          <div class="stat-v" id="st-bpm" style="color:var(--accent)">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-l">Czas sesji</div>
+          <div class="stat-v" id="st-time">0:00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-l">Taktów</div>
+          <div class="stat-v" id="st-beats">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-l">Start BPM</div>
+          <div class="stat-v" id="st-start">–</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="footer-bar">
+  <div class="foot-item">SPACJA – takt kalibracji &nbsp;|&nbsp; ENTER – start/stop &nbsp;|&nbsp; ↑↓ – BPM ±1</div>
+</div>
+
+<div class="watermark">stworzone przez: Fizjomania</div>
+
+<script>
+  // ── AUDIO ──
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+  let volume = 0.8;
+  let accentEvery = 2; // co ile taktów akcent
+
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playClick(isAccent) {
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+
+    if (isAccent) {
+      osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    } else {
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(volume * 0.55, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    }
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.1);
+  }
+
+  // ── STAN ──
+  let bpm = 80;
+  let playing = false;
+  let beatCount = 0;
+  let beatTimer = null;
+  let beatProgressTimer = null;
+  let sessionSeconds = 0;
+  let sessionTimer = null;
+  let sessionStartBpm = 80;
+  let beatProgress = 0;
+
+  // Kalibracja
+  let calibActive = false;
+  let calibTaps = [];
+  let calibTimeout = null;
+
+  // Progresja
+  let progActive = false;
+  let progTimer = null;
+  let progStepSeconds = 0;
+  let progStepInterval = null;
+
+  // Fala
+  const waveCanvas = document.getElementById('wave-canvas');
+  const wCtx = waveCanvas.getContext('2d');
+  let wavePoints = [];
+  let waveAnimId = null;
+
+  function resizeWave() {
+    waveCanvas.width  = waveCanvas.parentElement.clientWidth;
+    waveCanvas.height = 120;
+  }
+  resizeWave();
+  window.addEventListener('resize', resizeWave);
+
+  function addWavePoint() {
+    wavePoints.push({ x: waveCanvas.width, y: waveCanvas.height * 0.5, age: 0, peak: true });
+  }
+
+  function drawWave() {
+    const w = waveCanvas.width, h = waveCanvas.height;
+    wCtx.clearRect(0, 0, w, h);
+
+    const speed = bpm / 60 * 2;
+    wavePoints = wavePoints.filter(p => p.x > -10);
+    wavePoints.forEach(p => { p.x -= speed; p.age++; });
+
+    if (wavePoints.length < 2) { waveAnimId = requestAnimationFrame(drawWave); return; }
+
+    // Linia bazowa
+    wCtx.beginPath();
+    wCtx.moveTo(0, h * 0.5);
+    wCtx.lineTo(w, h * 0.5);
+    wCtx.strokeStyle = '#1a2030';
+    wCtx.lineWidth = 1;
+    wCtx.stroke();
+
+    // Fala sinusoidalna między uderzeniami
+    const beatSpacing = (60 / bpm) * speed * 60;
+    wCtx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const phase = (x / beatSpacing) * Math.PI * 2;
+      const amp = h * 0.28;
+      const y = h * 0.5 - Math.sin(phase) * amp;
+      if (x === 0) wCtx.moveTo(x, y); else wCtx.lineTo(x, y);
+    }
+    wCtx.strokeStyle = '#00e5ff22';
+    wCtx.lineWidth = 1.5;
+    wCtx.stroke();
+
+    // Impulsy w punktach uderzeń
+    wavePoints.forEach((p, i) => {
+      const alpha = Math.max(0, 1 - p.age / 80);
+      const isAcc = (beatCount - wavePoints.length + i) % accentEvery === 0;
+      const col = isAcc ? `rgba(0,229,255,${alpha})` : `rgba(0,255,136,${alpha * 0.6})`;
+      const pulseH = isAcc ? h * 0.7 : h * 0.4;
+
+      const grad = wCtx.createLinearGradient(p.x, h * 0.5 - pulseH/2, p.x, h * 0.5 + pulseH/2);
+      grad.addColorStop(0, 'transparent');
+      grad.addColorStop(0.5, col);
+      grad.addColorStop(1, 'transparent');
+      wCtx.beginPath();
+      wCtx.moveTo(p.x, h * 0.5 - pulseH/2);
+      wCtx.lineTo(p.x, h * 0.5 + pulseH/2);
+      wCtx.strokeStyle = grad;
+      wCtx.lineWidth = isAcc ? 3 : 1.5;
+      wCtx.stroke();
+    });
+
+    waveAnimId = requestAnimationFrame(drawWave);
+  }
+
+  // ── METRONOM ──
+  function getBeatMs() { return 60000 / bpm; }
+
+  function doBeat() {
+    if (!playing) return;
+    const isAccent = beatCount % accentEvery === 0;
+    playClick(isAccent);
+    addWavePoint();
+
+    // Flash
+    const ball = document.getElementById('pulse-ball');
+    ball.classList.add('beat');
+    setTimeout(() => ball.classList.remove('beat'), 120);
+
+    const bpmEl = document.getElementById('bpm-big');
+    bpmEl.classList.add('pulse-flash');
+    setTimeout(() => bpmEl.classList.remove('pulse-flash'), 80);
+
+    // Pasek
+    document.getElementById('beat-fill').style.width = '0%';
+    const beatMs = getBeatMs();
+    let elapsed = 0;
+    clearInterval(beatProgressTimer);
+    beatProgressTimer = setInterval(() => {
+      elapsed += 30;
+      document.getElementById('beat-fill').style.width = Math.min(100, elapsed/beatMs*100) + '%';
+      if (elapsed >= beatMs) clearInterval(beatProgressTimer);
+    }, 30);
+
+    beatCount++;
+    document.getElementById('st-beats').textContent = beatCount;
+    beatTimer = setTimeout(doBeat, getBeatMs());
+  }
+
+  // ── BPM ──
+  function setBpm(b) {
+    bpm = Math.max(40, Math.min(160, b));
+    document.getElementById('bpm-big').textContent = bpm;
+    document.getElementById('bpm-slider').value = bpm;
+    document.getElementById('bpm-slider-val').textContent = bpm;
+    document.getElementById('st-bpm').textContent = bpm;
+    if (playing) { clearTimeout(beatTimer); doBeat(); }
+  }
+
+  function manualBpm(b) {
+    setBpm(b);
+    if (progActive) stopProgression();
+  }
+
+  // ── PLAY/STOP ──
+  function togglePlay() {
+    if (playing) stopMetronome(); else startMetronome();
+  }
+
+  function startMetronome() {
+    ensureAudio();
+    playing = true;
+    beatCount = 0;
+    sessionSeconds = 0;
+    sessionStartBpm = bpm;
+    document.getElementById('st-start').textContent = bpm;
+    document.getElementById('st-time').textContent = '0:00';
+    document.getElementById('playBtn').textContent = '⏹ STOP';
+    document.getElementById('playBtn').classList.add('on');
+    document.getElementById('phase-badge').textContent = 'SESJA AKTYWNA';
+    document.getElementById('phase-badge').style.color = 'var(--green)';
+    document.getElementById('phase-badge').style.borderColor = 'var(--green)';
+    sessionTimer = setInterval(() => {
+      sessionSeconds++;
+      const m = Math.floor(sessionSeconds/60), s = sessionSeconds%60;
+      document.getElementById('st-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+    cancelAnimationFrame(waveAnimId);
+    drawWave();
+    doBeat();
+  }
+
+  function stopMetronome() {
+    playing = false;
+    clearTimeout(beatTimer);
+    clearInterval(beatProgressTimer);
+    clearInterval(sessionTimer);
+    cancelAnimationFrame(waveAnimId);
+    wCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+    document.getElementById('playBtn').textContent = '▶ START';
+    document.getElementById('playBtn').classList.remove('on');
+    document.getElementById('phase-badge').textContent = 'ZATRZYMANY';
+    document.getElementById('phase-badge').style.color = 'var(--muted)';
+    document.getElementById('phase-badge').style.borderColor = 'var(--border)';
+    document.getElementById('beat-fill').style.width = '0%';
+    if (progActive) stopProgression();
+  }
+
+  // ── KALIBRACJA ──
+  function toggleCalib() {
+    if (!calibActive) startCalib(); else stopCalib();
+  }
+
+  function startCalib() {
+    calibActive = true;
+    calibTaps = [];
+    document.getElementById('calib-btn').classList.add('active');
+    document.getElementById('calib-btn').textContent = '✓ KLIKAJ W RYTM – NACIŚNIJ SPACJĘ LUB TEN PRZYCISK';
+    document.getElementById('calib-result').textContent = 'Czekam na kliknięcia...';
+    document.getElementById('calib-taps').innerHTML = '';
+  }
+
+  function stopCalib() {
+    calibActive = false;
+    document.getElementById('calib-btn').classList.remove('active');
+    document.getElementById('calib-btn').textContent = 'KLIKNIJ W RYTM KROKÓW PACJENTA';
+    if (calibTaps.length < 2) {
+      document.getElementById('calib-result').textContent = 'Za mało kliknięć – spróbuj ponownie.';
+      return;
+    }
+    // Oblicz BPM ze średniej interwałów
+    const intervals = [];
+    for (let i = 1; i < calibTaps.length; i++) intervals.push(calibTaps[i] - calibTaps[i-1]);
+    const avgInterval = intervals.reduce((a,b)=>a+b,0) / intervals.length;
+    const detectedBpm = Math.round(60000 / avgInterval);
+    const clampedBpm = Math.max(40, Math.min(160, detectedBpm));
+    document.getElementById('calib-result').textContent =
+      `✓ Wykryto: ${detectedBpm} BPM → ustawiam ${clampedBpm} BPM`;
+    setBpm(clampedBpm);
+    // Ustaw też progresję
+    document.getElementById('prog-start').value = clampedBpm;
+    document.getElementById('prog-target').value = Math.min(160, clampedBpm + 15);
+  }
+
+  function addTap() {
+    if (!calibActive) return;
+    calibTaps.push(Date.now());
+    // Dodaj kropkę
+    const dot = document.createElement('div');
+    dot.className = 'tap-dot';
+    document.getElementById('calib-taps').appendChild(dot);
+    // Reset timeout – jeśli nie kliknięto przez 2s, zakończ
+    clearTimeout(calibTimeout);
+    calibTimeout = setTimeout(() => {
+      if (calibTaps.length >= 4) stopCalib();
+    }, 2000);
+    // Podgląd BPM na bieżąco
+    if (calibTaps.length >= 2) {
+      const intervals = [];
+      for (let i = 1; i < calibTaps.length; i++) intervals.push(calibTaps[i] - calibTaps[i-1]);
+      const avg = intervals.reduce((a,b)=>a+b,0)/intervals.length;
+      const live = Math.round(60000/avg);
+      document.getElementById('calib-result').textContent = `Podgląd: ~${live} BPM (${calibTaps.length} kliknięć)`;
+    }
+  }
+
+  // Kliknięcie przycisku kalibracji
+  document.getElementById('calib-btn').addEventListener('click', e => {
+    if (calibActive) { addTap(); e.stopPropagation(); }
+  });
+
+  // ── PROGRESJA ──
+  let progStepTimer = null;
+
+  function toggleProgression() {
+    if (progActive) stopProgression(); else startProgression();
+  }
+
+  function startProgression() {
+    const startB = parseInt(document.getElementById('prog-start').value);
+    const targetB = parseInt(document.getElementById('prog-target').value);
+    const step    = parseInt(document.getElementById('prog-step').value);
+    const intSec  = parseInt(document.getElementById('prog-interval').value);
+
+    if (startB >= targetB) {
+      document.getElementById('prog-status').textContent = 'Cel musi być > Start!';
+      return;
+    }
+
+    progActive = true;
+    progStepSeconds = 0;
+    setBpm(startB);
+    if (!playing) startMetronome();
+
+    document.getElementById('prog-btn').textContent = '⏹ Zatrzymaj progresję';
+    document.getElementById('phase-badge').textContent = `PROGRESJA: ${startB} → ${targetB} BPM`;
+    document.getElementById('phase-badge').style.color = 'var(--orange)';
+    document.getElementById('phase-badge').style.borderColor = 'var(--orange)';
+
+    // Pasek progresji
+    document.getElementById('prog-bar').style.width = '0%';
+
+    progStepTimer = setInterval(() => {
+      progStepSeconds++;
+      const pct = (progStepSeconds % intSec) / intSec * 100;
+      document.getElementById('prog-bar').style.width = pct + '%';
+
+      if (progStepSeconds % intSec === 0) {
+        const newBpm = Math.min(bpm + step, targetB);
+        setBpm(newBpm);
+        document.getElementById('prog-status').textContent = `↑ ${newBpm} BPM`;
+        if (newBpm >= targetB) {
+          document.getElementById('prog-status').textContent = `✓ Cel ${targetB} BPM osiągnięty!`;
+          stopProgression();
+        }
+      }
+      // Globalny pasek
+      const total = (targetB - startB) / step * intSec;
+      document.getElementById('prog-bar').style.width = Math.min(100, progStepSeconds/total*100) + '%';
+    }, 1000);
+  }
+
+  function stopProgression() {
+    progActive = false;
+    clearInterval(progStepTimer);
+    document.getElementById('prog-btn').textContent = '▶ Włącz progresję';
+    if (playing) {
+      document.getElementById('phase-badge').textContent = 'SESJA AKTYWNA';
+      document.getElementById('phase-badge').style.color = 'var(--green)';
+      document.getElementById('phase-badge').style.borderColor = 'var(--green)';
+    }
+  }
+
+  // ── AKCENT ──
+  function setAccent(n) {
+    accentEvery = n;
+    document.querySelectorAll('[data-acc]').forEach(b => b.classList.toggle('active', parseInt(b.dataset.acc)===n));
+  }
+
+  // ── KLAWIATURA ──
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      if (calibActive) addTap();
+    }
+    if (e.key === 'Enter') { e.preventDefault(); togglePlay(); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); manualBpm(bpm+1); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); manualBpm(bpm-1); }
+  });
+
+  // ── INIT ──
+  document.getElementById('bpm-big').textContent = '80';
+  document.getElementById('st-bpm').textContent = '80';
+</script>
+
+</body>
+</html>
